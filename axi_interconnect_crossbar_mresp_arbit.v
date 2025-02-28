@@ -26,6 +26,8 @@ module axi_interconnect_crossbar_mresp_arbit #
     parameter                           WIDTH_ID            = 4     ,
     parameter                           WIDTH_RESPINFO      = 48    ,
     parameter                           NUM_OUTSTANDING     = 4     ,
+    parameter                           MODE_READ           = 0     ,
+    parameter                           WIDTH_RUSER         = 1     ,
     parameter                           WIDTH_OUTSTANDING   = LOG2(NUM_OUTSTANDING-1),
     parameter                           WIDTH_SALVE         = LOG2(NUM_SLAVE-1),
     parameter                           WIDTH_MASTER        = LOG2(NUM_MASTER),
@@ -114,22 +116,50 @@ for(i=0;i<WIDTH_MASTER;i=i+1) begin:bitand_loop
 assign cuser[i] =  |cuer_tmp1[i];
 
 end
+
+if((MODE_READ == 1) || (WIDTH_RUSER > 0)) begin:mode_read_if
+always @ (posedge clk_sys or negedge rst_n) begin
+    if(~rst_n) 
+        resp_info[(WIDTH_SALVE+3+WIDTH_ID)+:(WIDTH_RESPINFO-WIDTH_ID-3)] <= #U_DLY 'd0;
+    else begin
+        if(resp_ready)
+            resp_info[(WIDTH_SALVE+3+WIDTH_ID)+:(WIDTH_RESPINFO-WIDTH_ID-3)] <= #U_DLY
+                m_resp_info_tmp[(cuser*WIDTH_RESPINFO+3+WIDTH_ID)+:(WIDTH_RESPINFO-WIDTH_ID-3)];
+        else
+            ;
+    end
+end
+
+end
+
+if(WIDTH_ID > 0) begin:width_id_if
+always @ (posedge clk_sys or negedge rst_n) begin
+    if(~rst_n) 
+        resp_info[(WIDTH_SALVE+3)+:WIDTH_ID] <= #U_DLY 'd0;
+    else begin
+        if(resp_ready)
+            resp_info[(WIDTH_SALVE+3)+:WIDTH_ID] <= #U_DLY ififo_rddata[WIDTH_SALVE+:WIDTH_ID];
+        else
+            ;
+    end
+end
+
+end
 endgenerate
 
 always @ (posedge clk_sys or negedge rst_n) begin
     if(~rst_n) begin
-        resp_info <= #U_DLY 'd0;
+        resp_info[0+:(WIDTH_SALVE+3)] <= #U_DLY 'd0;
         resp_valid <= #U_DLY 'd0;
     end
     else begin
         if(resp_ready)
- //           resp_info <= #U_DLY {m_resp_info_tmp[(cuser*WIDTH_RESPINFO+WIDTH_ID)+:(WIDTH_RESPINFO-WIDTH_ID)],
- //                               ififo_rddata[0+:WIDTH_SALVE]};
-            resp_info <= #U_DLY {m_resp_info_tmp[cuser*WIDTH_RESPINFO+:WIDTH_RESPINFO],
-                                 ififo_rddata[0+:WIDTH_SALVE]};
+            resp_info[0+:(WIDTH_SALVE+3)] <= #U_DLY { 
+                                            m_resp_info_tmp[(cuser*WIDTH_RESPINFO)+:3],
+                                            ififo_rddata[0+:WIDTH_SALVE]};
         else
             ;
-
+        
         if(m_resp_valid[cuser] & m_resp_ready[cuser])
             resp_valid <= #U_DLY 'd1;
         else if(resp_ready)
@@ -138,6 +168,30 @@ always @ (posedge clk_sys or negedge rst_n) begin
             ;
     end
 end
+//always @ (posedge clk_sys or negedge rst_n) begin
+//    if(~rst_n) begin
+//        resp_info <= #U_DLY 'd0;
+//        resp_valid <= #U_DLY 'd0;
+//    end
+//    else begin
+//        if(resp_ready)
+//            resp_info <= #U_DLY {m_resp_info_tmp[(cuser*WIDTH_RESPINFO+3+WIDTH_ID)+:(WIDTH_RESPINFO-WIDTH_ID-3)],
+//                                ififo_rddata[WIDTH_SALVE+:WIDTH_ID],
+//                                m_resp_info_tmp[(cuser*WIDTH_RESPINFO)+:3],
+//                                ififo_rddata[0+:WIDTH_SALVE]};
+// //           resp_info <= #U_DLY {m_resp_info_tmp[cuser*WIDTH_RESPINFO+:WIDTH_RESPINFO],
+// //                                 ififo_rddata[0+:WIDTH_SALVE]};
+//        else
+//            ;
+//
+//        if(m_resp_valid[cuser] & m_resp_ready[cuser])
+//            resp_valid <= #U_DLY 'd1;
+//        else if(resp_ready)
+//            resp_valid <= #U_DLY 'd0;
+//        else
+//            ;
+//    end
+//end
 
 axi_interconnect_fifogen #
 (

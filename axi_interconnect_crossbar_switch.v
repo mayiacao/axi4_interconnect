@@ -28,6 +28,7 @@ module axi_interconnect_crossbar_switch #
     parameter [NUM_MASTER*WIDTH_ADDR-1:0] ADDR_BASE         = 'd0   , 
     parameter [NUM_MASTER*WIDTH_ADDR-1:0] ADDR_HIGH         = 'd0   , 
     parameter                           WIDTH_ID            = 4     ,
+    parameter                           WIDTH_RUSER         = 1     ,
     parameter                           WIDTH_ADDRINFO      = 64    ,   
     parameter                           WIDTH_DATAINFO      = 48    ,
     parameter                           WIDTH_RESPINFO      = 48    ,
@@ -180,6 +181,8 @@ axi_interconnect_crossbar_mresp_arbit #
     .WIDTH_ID                       (WIDTH_ID                   ), 
     .WIDTH_RESPINFO                 (WIDTH_RESPINFO             ), 
     .NUM_OUTSTANDING                (NUM_OUTSTANDING            ), 
+    .MODE_READ                      (MODE_READ                  ), 
+    .WIDTH_RUSER                    (WIDTH_RUSER                ), 
     .U_DLY                          (U_DLY                      )  // 
 )
 u_axi_interconnect_crossbar_mresp_arbit

@@ -39,30 +39,30 @@ module axi_interconnect_width_convert_rresp #
 // ---------------------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------------------
-    input                               req_en                      , 
-    input                         [2:0] req_size                    , 
-    input                         [7:0] req_offset                  , 
-    input                               req_last                    , 
+(*mark_debug = "true" ,keep = "true"*)    input                               req_en                      , 
+(*mark_debug = "true" ,keep = "true"*)    input                         [2:0] req_size                    , 
+(*mark_debug = "true" ,keep = "true"*)    input                         [7:0] req_offset                  , 
+(*mark_debug = "true" ,keep = "true"*)    input                               req_last                    , 
 // ---------------------------------------------------------------------------------
 // Slave AXI4
 // ---------------------------------------------------------------------------------
-    output                   [W_ID-1:0] s_respid                    , 
-    output            [WIDTH_SDATA-1:0] s_respdata                  , 
-    output                      [2-1:0] s_respresp                  , 
-    output                              s_resplast                  , 
-    output                [W_RUSER-1:0] s_respuser                  , 
-    output                              s_respvalid                 , 
-    input                               s_respready                 , 
+(*mark_debug = "true" ,keep = "true"*)    output                   [W_ID-1:0] s_respid                    , 
+(*mark_debug = "true" ,keep = "true"*)    output            [WIDTH_SDATA-1:0] s_respdata                  , 
+(*mark_debug = "true" ,keep = "true"*)    output                      [2-1:0] s_respresp                  , 
+(*mark_debug = "true" ,keep = "true"*)    output                              s_resplast                  , 
+(*mark_debug = "true" ,keep = "true"*)    output                [W_RUSER-1:0] s_respuser                  , 
+(*mark_debug = "true" ,keep = "true"*)    output                              s_respvalid                 , 
+(*mark_debug = "true" ,keep = "true"*)    input                               s_respready                 , 
 // ---------------------------------------------------------------------------------
 // Master AXI4
 // ---------------------------------------------------------------------------------
-    input                    [W_ID-1:0] m_respid                    , 
-    input             [WIDTH_MDATA-1:0] m_respdata                  , 
-    input                       [2-1:0] m_respresp                  , 
-    input                               m_resplast                  , 
-    input                 [W_RUSER-1:0] m_respuser                  , 
-    input                               m_respvalid                 , 
-    output                              m_respready                   
+(*mark_debug = "true" ,keep = "true"*)    input                    [W_ID-1:0] m_respid                    , 
+(*mark_debug = "true" ,keep = "true"*)    input             [WIDTH_MDATA-1:0] m_respdata                  , 
+(*mark_debug = "true" ,keep = "true"*)    input                       [2-1:0] m_respresp                  , 
+(*mark_debug = "true" ,keep = "true"*)    input                               m_resplast                  , 
+(*mark_debug = "true" ,keep = "true"*)    input                 [W_RUSER-1:0] m_respuser                  , 
+(*mark_debug = "true" ,keep = "true"*)    input                               m_respvalid                 , 
+(*mark_debug = "true" ,keep = "true"*)    output                              m_respready                   
 );
 
 localparam WIDTH_DFIFO = WIDTH_ID+WIDTH_SDATA+2+1+WIDTH_RUSER;
@@ -76,25 +76,25 @@ localparam IDLE = 2'b00;
 localparam LOAD = 2'b01;
 localparam WAIT = 2'b10;
 
-reg                               [1:0] cstate                      ; 
-reg                               [1:0] nstate                      ; 
-
-wire                              [2:0] stp_size                    ; 
-reg                     [WIDTH_SUB-1:0] stp_data                    ; 
-reg                     [WIDTH_SUB-1:0] stp_cnt                     ; 
-
-wire                    [WIDTH_SUB-1:0] mux_data                    ; 
-reg                     [WIDTH_SUB-1:0] mux_cnt                     ; 
-
-wire                                    reqfifo_rden                ; 
-wire                             [11:0] reqfifo_rddata              ; 
-wire                                    reqfifo_empty               ; 
-
-reg                                     dfifo_wren                  ; 
-reg                   [WIDTH_DFIFO-1:0] dfifo_wrdata                ; 
-wire                  [WIDTH_DFIFO-1:0] dfifo_rddata                ; 
-wire                                    dfifo_pfull                 ; 
-wire                                    dfifo_empty                 ; 
+(*mark_debug = "true" ,keep = "true"*)reg                               [1:0] cstate                      ; 
+(*mark_debug = "true" ,keep = "true"*)reg                               [1:0] nstate                      ; 
+                             
+(*mark_debug = "true" ,keep = "true"*)wire                              [2:0] stp_size                    ; 
+(*mark_debug = "true" ,keep = "true"*)reg                     [WIDTH_SUB-1:0] stp_data                    ; 
+(*mark_debug = "true" ,keep = "true"*)reg                     [WIDTH_SUB-1:0] stp_cnt                     ; 
+                             
+(*mark_debug = "true" ,keep = "true"*)wire                    [WIDTH_SUB-1:0] mux_data                    ; 
+(*mark_debug = "true" ,keep = "true"*)reg                     [WIDTH_SUB-1:0] mux_cnt                     ; 
+                             
+(*mark_debug = "true" ,keep = "true"*)wire                                    reqfifo_rden                ; 
+(*mark_debug = "true" ,keep = "true"*)wire                             [11:0] reqfifo_rddata              ; 
+(*mark_debug = "true" ,keep = "true"*)wire                                    reqfifo_empty               ; 
+                            
+(*mark_debug = "true" ,keep = "true"*)reg                                     dfifo_wren                  ; 
+(*mark_debug = "true" ,keep = "true"*)reg                   [WIDTH_DFIFO-1:0] dfifo_wrdata                ; 
+(*mark_debug = "true" ,keep = "true"*)wire                  [WIDTH_DFIFO-1:0] dfifo_rddata                ; 
+(*mark_debug = "true" ,keep = "true"*)wire                                    dfifo_pfull                 ; 
+(*mark_debug = "true" ,keep = "true"*)wire                                    dfifo_empty                 ; 
 
 genvar                                  i                           ;
 
@@ -203,7 +203,7 @@ always @ (posedge clk_sys or negedge rst_n) begin
     if(~rst_n) 
         dfifo_wrdata[i*WIDTH_MDATA+:WIDTH_MDATA] <= #U_DLY 'd0;
     else begin
-        if(stp_cnt == i[WIDTH_SUB-1:0]) 
+        if(mux_cnt == i[WIDTH_SUB-1:0]) 
             dfifo_wrdata[i*WIDTH_MDATA+:WIDTH_MDATA] <= #U_DLY m_respdata;
         else 
             ;
