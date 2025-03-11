@@ -110,7 +110,7 @@ always @ (posedge clk_sys or negedge rst_n) begin
     else begin
         if(s_reqaready & s_reqavalid)
             s_reqaready <= #U_DLY 'd0;
-        else if((cstate == WAIT) && m_reqaready && (remain_len <= max_burst_len))
+        else if((cstate == WAIT) && m_reqaready && (remain_len_last <= max_burst_len))
             s_reqaready <= #U_DLY 'd1;
         else
             ;
