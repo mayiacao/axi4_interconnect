@@ -1,3 +1,5 @@
+file copy -force i:/sim_lib/MODELSIM10_5/vivado22_2/modelsim.ini ./modelsim.ini 
+
 vlib work
 vmap work work
 

@@ -36,6 +36,7 @@ module axi_interconnect_crossbar_arbit_polling #
     output                  [WIDTH-1:0] current_user                  
 );
 
+wire                        [WIDTH-1:0] last_user_temp              ; 
 wire                          [NUM-1:0] user_base                   ; 
 wire                        [2*NUM-1:0] double_req                  ; 
 wire                        [2*NUM-1:0] double_gnt                  ; 
@@ -47,11 +48,12 @@ wire                          [NUM-1:0] cuer_tmp1 [WIDTH-1:0]       ;
 genvar                                  i                           ;
 genvar                                  j                           ;
 
-//assign user_base = 1'b1 << (last_user+1);
-assign user_base = 1'b1 << (last_user);
+assign last_user_temp = last_user-1;
+assign user_base = 1'b1 << last_user_temp;
+//assign user_base = 1'b1 << (last_user);
 assign double_req = {user_req,user_req};
 assign double_gnt = ~(double_req - user_base) & double_req;
-assign gnt = double_gnt[0+:NUM] | double_gnt[1+:NUM];
+assign gnt = double_gnt[0+:NUM] | double_gnt[NUM+:NUM];
 
 generate
 for(i=0;i<NUM;i=i+1) begin:onehot2dec_loop

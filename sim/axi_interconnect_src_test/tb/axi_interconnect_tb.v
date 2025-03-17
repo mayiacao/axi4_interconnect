@@ -24,16 +24,6 @@ module axi_interconnect_tb #
     parameter                           U_DLY = 1                     // 
 );
 
-localparam [4*32-1:0] ADDR_BASE = {32'h8000_0000,
-                                   32'h8001_0000,
-                                   32'h8002_0000,
-                                   32'h8003_0000};
-
-localparam [4*32-1:0] ADDR_HIGH = {32'h8000_ffff,
-                                   32'h8001_ffff,
-                                   32'h8002_ffff,
-                                   32'h8003_ffff};
-
 reg                               [3:0] clk_sys                     ; 
 reg                                     rst_n                       ; 
 
@@ -73,37 +63,38 @@ wire                                    axi4_s0_rlast               ;
 wire                                    axi4_s0_rvalid              ; 
 wire                                    axi4_s0_rready              ; 
 
-//wire                              [3:0] axi4_s1_awid                ; 
-//wire                           [32-1:0] axi4_s1_awaddr              ; 
-//wire                            [8-1:0] axi4_s1_awlen               ; 
-//wire                            [3-1:0] axi4_s1_awsize              ; 
-//wire                            [2-1:0] axi4_s1_awburst             ; 
-//wire                                    axi4_s1_awvalid             ; 
-//wire                                    axi4_s1_awready             ; 
-//
-//wire                           [32-1:0] axi4_s1_wdata               ; 
-//wire                            [4-1:0] axi4_s1_wstrb               ; 
-//wire                                    axi4_s1_wlast               ; 
-//wire                                    axi4_s1_wvalid              ; 
-//wire                                    axi4_s1_wready              ; 
-//
-//wire                            [2-1:0] axi4_s1_bresp               ; 
-//wire                                    axi4_s1_bvalid              ; 
-//wire                                    axi4_s1_bready              ; 
-//
-//wire                            [4-1:0] axi4_s1_arid                ; 
-//wire                           [32-1:0] axi4_s1_araddr              ; 
-//wire                            [8-1:0] axi4_s1_arlen               ; 
-//wire                            [3-1:0] axi4_s1_arsize              ; 
-//wire                            [2-1:0] axi4_s1_arburst             ; 
-//wire                                    axi4_s1_arvalid             ; 
-//wire                                    axi4_s1_arready             ; 
-//
-//wire                           [32-1:0] axi4_s1_rdata               ; 
-//wire                            [2-1:0] axi4_s1_rresp               ; 
-//wire                                    axi4_s1_rlast               ; 
-//wire                                    axi4_s1_rvalid              ; 
-//wire                                    axi4_s1_rready              ; 
+wire                              [3:0] axi4_s1_awid                ; 
+wire                           [32-1:0] axi4_s1_awaddr              ; 
+wire                            [8-1:0] axi4_s1_awlen               ; 
+wire                            [3-1:0] axi4_s1_awsize              ; 
+wire                            [2-1:0] axi4_s1_awburst             ; 
+wire                                    axi4_s1_awvalid             ; 
+wire                                    axi4_s1_awready             ; 
+
+wire                           [32-1:0] axi4_s1_wdata               ; 
+wire                            [4-1:0] axi4_s1_wstrb               ; 
+wire                                    axi4_s1_wlast               ; 
+wire                                    axi4_s1_wvalid              ; 
+wire                                    axi4_s1_wready              ; 
+
+wire                            [4-1:0] axi4_s1_bid                 ; 
+wire                            [2-1:0] axi4_s1_bresp               ; 
+wire                                    axi4_s1_bvalid              ; 
+wire                                    axi4_s1_bready              ; 
+
+wire                            [4-1:0] axi4_s1_arid                ; 
+wire                           [32-1:0] axi4_s1_araddr              ; 
+wire                            [8-1:0] axi4_s1_arlen               ; 
+wire                            [3-1:0] axi4_s1_arsize              ; 
+wire                            [2-1:0] axi4_s1_arburst             ; 
+wire                                    axi4_s1_arvalid             ; 
+wire                                    axi4_s1_arready             ; 
+
+wire                           [32-1:0] axi4_s1_rdata               ; 
+wire                            [2-1:0] axi4_s1_rresp               ; 
+wire                                    axi4_s1_rlast               ; 
+wire                                    axi4_s1_rvalid              ; 
+wire                                    axi4_s1_rready              ; 
 
 
 wire                          [4*4-1:0] m_axi4_arid                 ; 
@@ -179,53 +170,42 @@ initial begin
         axi_wrmem[m*32+:32] = {m[15:0],m[15:0]};
     end
     #1000;
-    u0_axi4_mdl.axi4_write('h1,2'b1,32'h8000_0008,8'd1,3'h3);
-    u0_axi4_mdl.axi4_write('h1,2'b1,32'h8003_0008,8'd1,3'h3);
-    u0_axi4_mdl.axi4_write('h2,2'b1,32'h8000_0010,8'd0,3'h3);
-    u0_axi4_mdl.axi4_write('h2,2'b1,32'h8003_0010,8'd0,3'h3);
-    u0_axi4_mdl.axi4_write('h3,2'b1,32'h8000_0018,8'd0,3'h3);
-    u0_axi4_mdl.axi4_write('h3,2'b1,32'h8003_0018,8'd0,3'h3);
-    u0_axi4_mdl.axi4_write('h4,2'b1,32'h8000_001c,8'd0,3'h3);
-    u0_axi4_mdl.axi4_write('h4,2'b1,32'h8003_001c,8'd0,3'h3);
-    u0_axi4_mdl.axi4_write('h5,2'b1,32'h8000_0020,8'd0,3'h2);
-    u0_axi4_mdl.axi4_write('h5,2'b1,32'h8003_0020,8'd0,3'h2);
-    u0_axi4_mdl.axi4_write('h6,2'b1,32'h8000_0028,8'd0,3'h1);
-    u0_axi4_mdl.axi4_write('h6,2'b1,32'h8003_0028,8'd0,3'h1);
-    u0_axi4_mdl.axi4_write('h7,2'b1,32'h8000_002c,8'd0,3'h0);
-    u0_axi4_mdl.axi4_write('h7,2'b1,32'h8003_002c,8'd0,3'h0);
-
-    u0_axi4_mdl.axi4_write('h1,2'b1,32'h8000_0000,8'hff,3'h3);
-    u0_axi4_mdl.axi4_write('h2,2'b1,32'h8003_0000,8'hff,3'h3);
-    u0_axi4_mdl.axi4_write('h1,2'b1,32'h8000_0010,8'h10,3'h3);
-    u0_axi4_mdl.axi4_write('h2,2'b1,32'h8003_0010,8'h10,3'h3);
+    u0_axi4_mdl.axi4_write('h1,2'b1,32'h8003_0000,8'hff,3'h2);
+    u0_axi4_mdl.axi4_write('h1,2'b1,32'h8002_0000,8'hff,3'h2);
+    u0_axi4_mdl.axi4_write('h1,2'b1,32'h8000_0000,8'hff,3'h4);
+    u0_axi4_mdl.axi4_write('h2,2'b1,32'h8001_0000,8'hff,3'h4);
+    u0_axi4_mdl.axi4_write('h3,2'b1,32'h8000_0100,8'h10,3'h4);
+    u0_axi4_mdl.axi4_write('h4,2'b1,32'h8001_0100,8'h10,3'h4);
     #10000;
-    u0_axi4_mdl.axi4_read('h1,2'b1,32'h8000_0000,8'hff,3'h2);
-    u0_axi4_mdl.axi4_read('h2,2'b1,32'h8003_0000,8'hff,3'h2);
-    u0_axi4_mdl.axi4_read('h1,2'b1,32'h8000_0010,8'h10,3'h2);
-    u0_axi4_mdl.axi4_read('h2,2'b1,32'h8003_0010,8'h10,3'h2);
+    u0_axi4_mdl.axi4_read('h1,2'b1,32'h8000_0000,8'hff,3'h4);
+    u0_axi4_mdl.axi4_read('h2,2'b1,32'h8001_0000,8'hff,3'h4);
+    u0_axi4_mdl.axi4_read('h3,2'b1,32'h8000_0100,8'h10,3'h4);
+    u0_axi4_mdl.axi4_read('h4,2'b1,32'h8001_0100,8'h10,3'h4);
 
 end
 
 //initial begin
-//    #1000;
-//    u1_axi4_mdl.axi4_write('h10,2'b1,32'h4000_0040,8'd5,3'h2);
-//    u1_axi4_mdl.axi4_write('h10,2'b1,32'h4001_0040,8'd5,3'h2);
-//    u1_axi4_mdl.axi4_write('h10,2'b1,32'h4002_0040,8'd5,3'h2);
-//    u1_axi4_mdl.axi4_write('h10,2'b1,32'h4003_0040,8'd5,3'h2);
 //
-//#10000;
-//    u1_axi4_mdl.axi4_read('h10,2'b1,32'h4000_0040,8'd5,3'h2);
-//    u1_axi4_mdl.axi4_read('h10,2'b1,32'h4001_0040,8'd5,3'h2);
-//    u1_axi4_mdl.axi4_read('h10,2'b1,32'h4002_0040,8'd5,3'h2);
-//    u1_axi4_mdl.axi4_read('h10,2'b1,32'h4003_0040,8'd5,3'h2);
+//    #1000;
+//
+//    u1_axi4_mdl.axi4_write('h5,2'b1,32'h8002_0000,8'hf,3'h2);
+//    u1_axi4_mdl.axi4_write('h6,2'b1,32'h8003_0000,8'hf,3'h2);
+//    u1_axi4_mdl.axi4_write('h7,2'b1,32'h8002_0010,8'h40,3'h2);
+//    u1_axi4_mdl.axi4_write('h8,2'b1,32'h8003_0010,8'h40,3'h2);
+//    #10000;
+//    u1_axi4_mdl.axi4_read('h5,2'b1,32'h8002_0000,8'hf,3'h2);
+//    u1_axi4_mdl.axi4_read('h6,2'b1,32'h8003_0000,8'hf,3'h2);
+//    u1_axi4_mdl.axi4_read('h7,2'b1,32'h8002_0010,8'h40,3'h2);
+//    u1_axi4_mdl.axi4_read('h8,2'b1,32'h8003_0010,8'h40,3'h2);
 //
 //end
+
 
 axi4_mdl #
 (
     .IDW                            (4                          ), 
-    .DW                             (64                         ), 
-    .DEW                            (8                          ), 
+    .DW                             (128                        ), 
+    .DEW                            (16                         ), 
     .AW                             (32                         ), 
     .MAX_BURST_LEN                  (256                        ), 
     .U_DLY                          (U_DLY                      )  // 
@@ -279,7 +259,7 @@ u0_axi4_mdl
 
 //axi4_mdl #
 //(
-//    .IDW                            (5                          ), 
+//    .IDW                            (4                          ), 
 //    .DW                             (32                         ), 
 //    .DEW                            (4                          ), 
 //    .AW                             (32                         ), 
@@ -291,7 +271,7 @@ u0_axi4_mdl
 //// ---------------------------------------------------------------------------------
 //// CLock & Reset
 //// ---------------------------------------------------------------------------------
-//    .clk_axi                        (clk_sys                    ), // (input )
+//    .clk_axi                        (clk_sys[1]                 ), // (input )
 //    .rst_n                          (rst_n                      ), // (input )
 //// ---------------------------------------------------------------------------------
 //// User Data
@@ -391,6 +371,51 @@ u_axi_interconnect
     .s00_axi4_bresp                 (axi4_s0_bresp              ), // (output)
     .s00_axi4_bvalid                (axi4_s0_bvalid             ), // (output)
     .s00_axi4_bready                (axi4_s0_bready             ), // (input )
+
+//    .s01_axi4_clk                   (clk_sys[1]                 ), // (input )
+//    .s01_axi4_arid                  (axi4_s1_arid               ), // (input ) [63:0]
+//    .s01_axi4_araddr                (axi4_s1_araddr[31:0]       ), // (input ) [1:0]
+//    .s01_axi4_arlen                 (axi4_s1_arlen              ), // (input ) [3:0]
+//    .s01_axi4_arsize                (axi4_s1_arsize             ), // (input ) [3:0]   
+//    .s01_axi4_arburst               (axi4_s1_arburst            ), // (input ) [7:0]  
+//    .s01_axi4_arregion              (                           ), // (input ) [0:0] 
+//    .s01_axi4_arlock                (axi4_s1_arlock             ), // (input ) [2:0] 
+//    .s01_axi4_arcache               (axi4_s1_arcache            ), // (input ) [3:0]  
+//    .s01_axi4_arprot                (axi4_s1_arprot             ), // (input ) [0:0]
+//    .s01_axi4_arqos                 (axi4_s1_arqos              ), // (input ) [2:0] 
+//    .s01_axi4_arvalid               (axi4_s1_arvalid            ), // (input ) [0:0]
+//    .s01_axi4_arready               (axi4_s1_arready            ), // (output)                     
+//                                                                            
+//    .s01_axi4_rid                   (axi4_s1_rid                ), // (output) [3:0]    
+//    .s01_axi4_rdata                 (axi4_s1_rdata              ), // (output) [0:0]  
+//    .s01_axi4_rresp                 (axi4_s1_rresp              ), // (output) [0:0] 
+//    .s01_axi4_rlast                 (axi4_s1_rlast              ), // (output) [1:0]  
+//    .s01_axi4_rvalid                (axi4_s1_rvalid             ), // (output) [0:0] 
+//    .s01_axi4_rready                (axi4_s1_rready             ), // (input )
+//
+//    .s01_axi4_awid                  (axi4_s1_awid               ), // (input ) [127:0] 
+//    .s01_axi4_awaddr                (axi4_s1_awaddr[31:0]       ), // (input ) [0:0]   
+//    .s01_axi4_awlen                 (axi4_s1_awlen              ), // (input ) [0:0]  
+//    .s01_axi4_awsize                (axi4_s1_awsize             ), // (input ) [15:0]  
+//    .s01_axi4_awburst               (axi4_s1_awburst            ), // (input ) [0:0]  
+//    .s01_axi4_awregion              (                           ), // (input )                      
+//    .s01_axi4_awlock                (axi4_s1_awlock             ), // (input ) [3:0]     
+//    .s01_axi4_awcache               (axi4_s1_awcache            ), // (input ) [0:0]  
+//    .s01_axi4_awprot                (axi4_s1_awprot             ), // (input ) [1:0]   
+//    .s01_axi4_awqos                 (axi4_s1_awqos              ), // (input ) [0:0]  
+//    .s01_axi4_awvalid               (axi4_s1_awvalid            ), // (input )
+//    .s01_axi4_awready               (axi4_s1_awready            ), // (output)
+//
+//    .s01_axi4_wdata                 (axi4_s1_wdata              ), // (input ) 
+//    .s01_axi4_wstrob                (axi4_s1_wstrb              ), // (input )
+//    .s01_axi4_wlast                 (axi4_s1_wlast              ), // (input )
+//    .s01_axi4_wvalid                (axi4_s1_wvalid             ), // (input )
+//    .s01_axi4_wready                (axi4_s1_wready             ), // (output)
+//
+//    .s01_axi4_bid                   (axi4_s1_bid                ), // (output)
+//    .s01_axi4_bresp                 (axi4_s1_bresp              ), // (output)
+//    .s01_axi4_bvalid                (axi4_s1_bvalid             ), // (output)
+//    .s01_axi4_bready                (axi4_s1_bready             ), // (input )
 // ---------------------------------------------------------------------------------
 // Master Interface 
 // ---------------------------------------------------------------------------------
