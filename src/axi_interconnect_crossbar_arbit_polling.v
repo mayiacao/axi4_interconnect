@@ -48,7 +48,7 @@ wire                          [NUM-1:0] cuer_tmp1 [WIDTH-1:0]       ;
 genvar                                  i                           ;
 genvar                                  j                           ;
 
-assign last_user_temp = last_user-1;
+assign last_user_temp = last_user+1;
 assign user_base = 1'b1 << last_user_temp;
 //assign user_base = 1'b1 << (last_user);
 assign double_req = {user_req,user_req};

@@ -24,7 +24,7 @@ module axi_interconnect_tb #
     parameter                           U_DLY = 1                     // 
 );
 
-localparam NUM = 2;
+localparam NUM = 8;
 localparam WIDTH = $clog2(NUM);
 
 reg                                     clk_sys                     ; 
