@@ -41,6 +41,7 @@ module axi_interconnect_width_convert_reqdata #
     input                         [7:0] split_len                   , 
     input                         [7:0] split_offset                , 
     input                         [2:0] split_size                  , 
+    input                         [2:0] split_reqsize               , 
 // ---------------------------------------------------------------------------------
 // Slave AXI4
 // ---------------------------------------------------------------------------------
@@ -66,6 +67,8 @@ localparam WIDTH_SUB = CLOG2(NUM_SUB);
 localparam WIDTH_SBYTE = CLOG2(WIDTH_SDATA/8);
 localparam WIDTH_MBYTE = CLOG2(WIDTH_MDATA/8);
 
+localparam WIDTH_BYTE = (WIDTH_SBYTE >= WIDTH_MBYTE) ? WIDTH_SBYTE : WIDTH_MBYTE;
+
 localparam IDLE  = 2'b00;
 localparam LOAD  = 2'b01;
 localparam WAIT  = 2'b10;
@@ -73,18 +76,19 @@ localparam WAIT  = 2'b10;
 reg                               [1:0] cstate                      ; 
 reg                               [1:0] nstate                      ; 
 
+wire                              [2:0] stp_reqsize                 ; 
 wire                              [2:0] stp_size                    ; 
 reg                     [WIDTH_SUB-1:0] stp_data                    ; 
 reg                     [WIDTH_SUB-1:0] stp_cnt                     ; 
 
-wire                    [WIDTH_SUB-1:0] mux_data                    ; 
-reg                     [WIDTH_SUB-1:0] mux_cnt                     ; 
+wire                   [WIDTH_BYTE-1:0] mux_data                    ; 
+reg                    [WIDTH_BYTE-1:0] mux_cnt                     ; 
 
 wire                              [7:0] mlen_data                   ; 
 reg                               [7:0] mlen_cnt                    ; 
 
 wire                                    ififo_rden                  ; 
-wire                             [18:0] ififo_rddata                ; 
+wire                             [21:0] ififo_rddata                ; 
 wire                                    ififo_empty                 ; 
 
 reg                                     dfifo_wren                  ; 
@@ -115,6 +119,7 @@ case(cstate)
     default : nstate = IDLE;
 endcase
 
+assign stp_reqsize = ififo_rddata[21:19];
 assign stp_size = ififo_rddata[18:16];
 assign mlen_data = ififo_rddata[15:8];
 
@@ -147,7 +152,7 @@ always @ (posedge clk_sys or negedge rst_n) begin
         if(cstate == LOAD)
             mux_cnt <= #U_DLY mux_data;
         else if(~dfifo_pfull && s_reqdvalid && (cstate == WAIT))
-            mux_cnt <= #U_DLY mux_cnt + 'd1;
+            mux_cnt <= #U_DLY mux_cnt + (1'b1 << stp_reqsize);
         else
             ;
     end
@@ -183,10 +188,27 @@ always @ (posedge clk_sys or negedge rst_n) begin
     end
 end
 
+//always @ (posedge clk_sys or negedge rst_n) begin
+//    if(~rst_n) begin
+//        sel_data <= #U_DLY 'd0; 
+//        sel_cnt <= #U_DLY 'd0;
+//    end
+//    else begin
+//        sel_data <= #U_DLY 1'b1 << (WIDTH_SBYTE - stp_reqsize);
+//
+//        if(cstate = IDLE)
+//            sel_cnt <= #U_DLY 'd0;
+//        else
+//                
+//        else
+//    end
+//end
+
+
 generate
 if(WIDTH_SDATA > WIDTH_MDATA) begin:amaxb_if
 
-assign mux_data = ififo_rddata[WIDTH_SBYTE-1:WIDTH_MBYTE];
+assign mux_data = ififo_rddata[WIDTH_SBYTE-1:0];
 
 if(WIDTH_DUSER>0)begin:maxhasuser_if
 
@@ -201,8 +223,10 @@ always @ (posedge clk_sys or negedge rst_n) begin
         else
             dfifo_wren <= #U_DLY 'd0;
 
-        dfifo_wrdata[(WIDTH_MDATA/8+WIDTH_DUSER+1)+:WIDTH_MDATA] <= #U_DLY s_reqddata[mux_cnt*WIDTH_MDATA+:WIDTH_MDATA];
-        dfifo_wrdata[(WIDTH_DUSER+1)+:WIDTH_MDATA/8] <= #U_DLY s_reqdstrob[(mux_cnt*WIDTH_MDATA/8)+:(WIDTH_MDATA/8)];
+        dfifo_wrdata[(WIDTH_MDATA/8+WIDTH_DUSER+1)+:WIDTH_MDATA] <= #U_DLY 
+                            s_reqddata[mux_cnt[WIDTH_MBYTE+:WIDTH_SUB]*WIDTH_MDATA+:WIDTH_MDATA];
+        dfifo_wrdata[(WIDTH_DUSER+1)+:WIDTH_MDATA/8] <= #U_DLY 
+                            s_reqdstrob[(mux_cnt[WIDTH_MBYTE+:WIDTH_SUB]*WIDTH_MDATA/8)+:(WIDTH_MDATA/8)];
         dfifo_wrdata[1+:WIDTH_DUSER] <= #U_DLY s_reqduser;
     end
 end
@@ -219,8 +243,10 @@ always @ (posedge clk_sys or negedge rst_n) begin
         else
             dfifo_wren <= #U_DLY 'd0;
 
-        dfifo_wrdata[(WIDTH_MDATA/8+WIDTH_DUSER+1)+:WIDTH_MDATA] <= #U_DLY s_reqddata[mux_cnt*WIDTH_MDATA+:WIDTH_MDATA];
-        dfifo_wrdata[(WIDTH_DUSER+1)+:WIDTH_MDATA/8] <= #U_DLY s_reqdstrob[(mux_cnt*WIDTH_MDATA/8)+:(WIDTH_MDATA/8)];
+        dfifo_wrdata[(WIDTH_MDATA/8+WIDTH_DUSER+1)+:WIDTH_MDATA] <= #U_DLY 
+                            s_reqddata[mux_cnt[WIDTH_MBYTE+:WIDTH_SUB]*WIDTH_MDATA+:WIDTH_MDATA];
+        dfifo_wrdata[(WIDTH_DUSER+1)+:WIDTH_MDATA/8] <= #U_DLY 
+                            s_reqdstrob[(mux_cnt[WIDTH_MBYTE+:WIDTH_SUB]*WIDTH_MDATA/8)+:(WIDTH_MDATA/8)];
 
 //        if(~dfifo_pfull && s_reqdvalid) begin
 //            if(mlen_cnt >= mlen_data - 'd1)
@@ -234,7 +260,7 @@ always @ (posedge clk_sys or negedge rst_n) begin
 end
 end end else begin:aminb_if
 
-assign mux_data = ififo_rddata[WIDTH_MBYTE-1:WIDTH_SBYTE];
+assign mux_data = ififo_rddata[WIDTH_MBYTE-1:0];
 
 if(WIDTH_DUSER>0)begin:minhasuser_if
 
@@ -246,7 +272,7 @@ always @ (posedge clk_sys or negedge rst_n) begin
         dfifo_wrdata[(WIDTH_DUSER+1+i*WIDTH_SDATA/8)+:WIDTH_SDATA/8] <= #U_DLY 'd0;
     end
     else begin
-        if(stp_cnt == i[WIDTH_SUB-1:0]) begin
+        if(mux_cnt[WIDTH_SBYTE+:WIDTH_SUB] == i[WIDTH_SUB-1:0]) begin
             dfifo_wrdata[(WIDTH_MDATA/8+WIDTH_DUSER+1+i*WIDTH_SDATA)+:WIDTH_SDATA] <= #U_DLY s_reqddata;
             dfifo_wrdata[(WIDTH_DUSER+1+i*WIDTH_SDATA/8)+:WIDTH_SDATA/8] <= #U_DLY s_reqdstrob;
         end
@@ -254,7 +280,7 @@ always @ (posedge clk_sys or negedge rst_n) begin
             dfifo_wrdata[(WIDTH_DUSER+1+i*WIDTH_SDATA/8)+:WIDTH_SDATA/8] <= #U_DLY 'd0;
     end
 end
-            
+
 end
 
 always @ (posedge clk_sys or negedge rst_n) begin
@@ -282,7 +308,7 @@ always @ (posedge clk_sys or negedge rst_n) begin
         dfifo_wrdata[(1+i*WIDTH_SDATA/8)+:WIDTH_SDATA/8] <= #U_DLY 'd0;
     end
     else begin
-        if(stp_cnt == i[WIDTH_SUB-1:0]) begin
+        if(mux_cnt[WIDTH_SBYTE+:WIDTH_SUB] == i[WIDTH_SUB-1:0]) begin
             dfifo_wrdata[(WIDTH_MDATA/8+1+i*WIDTH_SDATA)+:WIDTH_SDATA] <= #U_DLY s_reqddata;
             dfifo_wrdata[(1+i*WIDTH_SDATA/8)+:WIDTH_SDATA/8] <= #U_DLY s_reqdstrob;
         end
@@ -357,9 +383,9 @@ u0_axi_interconnect_fifogen
 
 axi_interconnect_fifogen #
 (
-    .PA_DW                          (19                         ), // It must be a multiple of 8.
+    .PA_DW                          (22                         ), // It must be a multiple of 8.
     .PA_AW                          (WIDTH_OUTSTANDING          ), 
-    .PB_DW                          (19                         ), // It must be a multiple of PA_DW.
+    .PB_DW                          (22                         ), // It must be a multiple of PA_DW.
     .RD_AS_ACK                      ("TRUE"                     ), // "TRUE" OR "FALSE"
     .CLOCK_ASYNC                    ("FALSE"                    ), // 
     .U_DLY                          (U_DLY                      )  // 
@@ -376,7 +402,7 @@ u1_axi_interconnect_fifogen
 // Write Control & Status
 // ---------------------------------------------------------------------------------
     .wr_en                          (split_en                   ), // (input )
-    .wr_data                        ({split_size,split_len,split_offset}), // (input )
+    .wr_data                        ({split_reqsize,split_size,split_len,split_offset}), // (input )
     .prog_data                      ('d1                        ), // (input )
     .wr_cnt                         (                           ), // (output)
     .full                           (                           ), // (output)

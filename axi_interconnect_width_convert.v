@@ -161,6 +161,7 @@ wire                                    wrsplit_en                  ;
 wire                              [7:0] wrsplit_len                 ; 
 wire                              [7:0] wrsplit_offset              ; 
 wire                              [2:0] wrsplit_size                ; 
+wire                              [2:0] wrsplit_reqsize             ; 
 wire                                    wrsplit_tlast               ; 
 
 
@@ -186,6 +187,7 @@ u0_axi_interconnect_width_convert_reqaddr
     .split_len                      (                           ), // (output)
     .split_offset                   (rdsplit_offset[7:0]        ), // (output)
     .split_size                     (rdsplit_size[2:0]          ), // (output)
+    .split_reqsize                  (                           ), // (output)
     .split_tlast                    (rdsplit_tlast              ), // (output)
 // ---------------------------------------------------------------------------------
 // Slave AXI4
@@ -270,6 +272,7 @@ axi_interconnect_width_convert_reqaddr #
 (
     .WIDTH_ID                       (WIDTH_ID                   ), 
     .WIDTH_ADDR                     (WIDTH_ADDR                 ), 
+    .WIDTH_MDATA                    (WIDTH_MDATA                ), 
     .WIDTH_AUSER                    (WIDTH_AWUSER               ), 
     .U_DLY                          (U_DLY                      )  // 
 )
@@ -287,6 +290,7 @@ u1_axi_interconnect_width_convert_reqaddr
     .split_len                      (wrsplit_len[7:0]           ), // (output)
     .split_offset                   (wrsplit_offset[7:0]        ), // (output)
     .split_size                     (wrsplit_size[2:0]          ), // (output)
+    .split_reqsize                  (wrsplit_reqsize[2:0]       ), // (output)
     .split_tlast                    (wrsplit_tlast              ), // (output)
 // ---------------------------------------------------------------------------------
 // Slave AXI4
@@ -344,6 +348,7 @@ u_axi_interconnect_width_convert_reqdata
     .split_len                      (wrsplit_len[7:0]           ), // (input )
     .split_offset                   (wrsplit_offset[7:0]        ), // (input )
     .split_size                     (wrsplit_size[2:0]          ), // (input )
+    .split_reqsize                  (wrsplit_reqsize[2:0]       ), // (input )
 // ---------------------------------------------------------------------------------
 // Slave AXI4
 // ---------------------------------------------------------------------------------
