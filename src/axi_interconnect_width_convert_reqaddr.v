@@ -43,6 +43,7 @@ module axi_interconnect_width_convert_reqaddr #
     output                        [7:0] split_len                   , 
     output                        [7:0] split_offset                , 
     output reg                    [2:0] split_size                  , 
+    output reg                    [2:0] split_reqsize               , 
     output reg                          split_tlast                 , 
 // ---------------------------------------------------------------------------------
 // Slave AXI4
@@ -220,13 +221,19 @@ assign split_offset = m_reqaaddr[7:0];
 always @ (posedge clk_sys or negedge rst_n) begin
     if(~rst_n) begin
         split_size <= #U_DLY 'd0;
+        split_reqsize <= #U_DLY 'd0;
         split_tlast <= #U_DLY 'd0;
     end
     else begin
         if(s_reqasize <= MAX_MSIZE)
-            split_size <= #U_DLY 'd0;
+            split_size <= #U_DLY 0;
         else
             split_size <= #U_DLY s_reqasize - MAX_MSIZE;
+
+        if(s_reqasize <= MAX_MSIZE)
+            split_reqsize <= #U_DLY s_reqasize;
+        else
+            split_size <= #U_DLY MAX_MSIZE;
 
         if((remain_len <= max_burst_len) && (cstate == WAIT))
             split_tlast <= #U_DLY 'd1;

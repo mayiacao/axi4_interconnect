@@ -95,9 +95,16 @@ always @ (posedge clk_sys or negedge rst_n) begin
         else
             ;
 
-        if(addr_ready & s_addr_valid[cuser])
+//        if(addr_ready && s_addr_valid[cuser])
+//            addr_valid <= #U_DLY 'd1;
+//        else if(addr_ready)
+//            addr_valid <= #U_DLY 'd0;
+//        else
+//            ;
+
+        if(s_addr_valid[cuser])
             addr_valid <= #U_DLY 'd1;
-        else if(addr_ready)
+        else if(addr_ready && addr_valid)
             addr_valid <= #U_DLY 'd0;
         else
             ;
