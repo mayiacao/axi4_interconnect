@@ -1,7 +1,7 @@
 // +FHDR============================================================================/
 // Author       : hjie
-// Creat Time   : 2025/01/23 11:23:47
-// File Name    : axi_interconnect_tb.v
+// Creat Time   : 2025/03/18 09:30:23
+// File Name    : arbit_tb.v
 // Module Ver   : Vx.x
 //
 //
@@ -14,12 +14,12 @@
 //
 // -FHDR============================================================================/
 // 
-// axi_interconnect_tb
+// arbit_tb
 //    |---
 // 
 `timescale 1ns/1ps
 
-module axi_interconnect_tb #
+module arbit_tb #
 (
     parameter                           U_DLY = 1                     // 
 );

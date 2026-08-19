@@ -1,6 +1,6 @@
 // +FHDR============================================================================/ 
 // Author       : hjie
-// Creat Time   : 2025/11/29 11:19:20
+// Creat Time   : 2025/12/29 09:10:56
 // File Name    : axi_interconnect.v
 // Module Ver   : V1.0
 //
@@ -43,7 +43,7 @@ parameter                           U_DLY = 1                     //
    output                              s00_axi4_arready         , 
 
    output                       [03:0] s00_axi4_rid            , 
-   output                       [511:0] s00_axi4_rdata          , 
+   output                       [255:0] s00_axi4_rdata          , 
    output                        [1:0] s00_axi4_rresp          , 
    output                              s00_axi4_rlast          , 
    output                              s00_axi4_rvalid          , 
@@ -59,8 +59,8 @@ parameter                           U_DLY = 1                     //
    input                               s00_axi4_awvalid         , 
    output                              s00_axi4_awready         , 
 
-   input                        [511:0] s00_axi4_wdata          , 
-   input                        [63:0] s00_axi4_wstrob         , 
+   input                        [255:0] s00_axi4_wdata          , 
+   input                        [31:0] s00_axi4_wstrob         , 
    input                               s00_axi4_wlast          , 
    input                               s00_axi4_wvalid          , 
    output                              s00_axi4_wready          , 
@@ -86,7 +86,7 @@ parameter                           U_DLY = 1                     //
    input                               m00_axi4_arready         , 
 
    input                        [03:0] m00_axi4_rid            , 
-   input                        [255:0] m00_axi4_rdata          , 
+   input                        [511:0] m00_axi4_rdata          , 
    input                         [1:0] m00_axi4_rresp          , 
    input                               m00_axi4_rlast          , 
    input                               m00_axi4_rvalid          , 
@@ -102,8 +102,8 @@ parameter                           U_DLY = 1                     //
    output                              m00_axi4_awvalid         , 
    input                               m00_axi4_awready         , 
 
-   output                       [255:0] m00_axi4_wdata          , 
-   output                       [31:0] m00_axi4_wstrob         , 
+   output                       [511:0] m00_axi4_wdata          , 
+   output                       [63:0] m00_axi4_wstrob         , 
    output                              m00_axi4_wlast          , 
    output                              m00_axi4_wvalid          , 
    input                               m00_axi4_wready          , 
@@ -118,7 +118,7 @@ localparam [1*32-1:0] ADDR_BASE = {
 32'h80000000};
 
 localparam [1*32-1:0] ADDR_HIGH = { 
-32'h800fffff};
+32'h80ffffff};
 
 wire                              [03:0] s00_cdc_axi4_arid                 ; 
 wire                              [31:0] s00_cdc_axi4_araddr               ; 
@@ -131,7 +131,7 @@ wire                                    s00_cdc_axi4_arvalid              ;
 wire                                    s00_cdc_axi4_arready              ; 
 
 wire                              [03:0] s00_cdc_axi4_rid                  ; 
-wire                              [511:0] s00_cdc_axi4_rdata                ;  
+wire                              [255:0] s00_cdc_axi4_rdata                ;  
 wire                              [ 1:0] s00_cdc_axi4_rresp                ;  
 wire                                     s00_cdc_axi4_rlast                ; 
 wire                                     s00_cdc_axi4_rvalid               ; 
@@ -147,8 +147,8 @@ wire                              [ 3:0] s00_cdc_axi4_awcache              ;
 wire                                    s00_cdc_axi4_awvalid              ; 
 wire                                    s00_cdc_axi4_awready              ; 
 
-wire                             [511:0] s00_cdc_axi4_wdata                ; 
-wire                             [63:0] s00_cdc_axi4_wstrob               ; 
+wire                             [255:0] s00_cdc_axi4_wdata                ; 
+wire                             [31:0] s00_cdc_axi4_wstrob               ; 
 wire                                    s00_cdc_axi4_wlast                ; 
 wire                                    s00_cdc_axi4_wvalid               ; 
 wire                                    s00_cdc_axi4_wready               ; 
@@ -170,7 +170,7 @@ wire                                    s00_dcv_axi4_arvalid              ;
 wire                                    s00_dcv_axi4_arready              ; 
 
 wire                              [03:0] s00_dcv_axi4_rid                  ; 
-wire                              [511:0] s00_dcv_axi4_rdata                ;  
+wire                              [255:0] s00_dcv_axi4_rdata                ;  
 wire                              [ 1:0] s00_dcv_axi4_rresp                ;  
 wire                                     s00_dcv_axi4_rlast                ; 
 wire                                     s00_dcv_axi4_rvalid               ; 
@@ -186,8 +186,8 @@ wire                              [ 3:0] s00_dcv_axi4_awcache              ;
 wire                                    s00_dcv_axi4_awvalid              ; 
 wire                                    s00_dcv_axi4_awready              ; 
 
-wire                             [511:0] s00_dcv_axi4_wdata                ; 
-wire                             [63:0] s00_dcv_axi4_wstrob               ; 
+wire                             [255:0] s00_dcv_axi4_wdata                ; 
+wire                             [31:0] s00_dcv_axi4_wstrob               ; 
 wire                                    s00_dcv_axi4_wlast                ; 
 wire                                    s00_dcv_axi4_wvalid               ; 
 wire                                    s00_dcv_axi4_wready               ; 
@@ -209,7 +209,7 @@ wire                           [01-1:0] s_cbr_axi4_arvalid          ;
 wire                           [01-1:0] s_cbr_axi4_arready          ; 
 
 wire                        [01*04-1:0] s_cbr_axi4_rid              ; 
-wire                        [01*512-1:0] s_cbr_axi4_rdata            ;  
+wire                        [01*256-1:0] s_cbr_axi4_rdata            ;  
 wire                         [01*2-1:0] s_cbr_axi4_rresp            ;  
 wire                           [01-1:0] s_cbr_axi4_rlast            ;  
 wire                           [01-1:0] s_cbr_axi4_rvalid           ; 
@@ -225,8 +225,8 @@ wire                         [01*4-1:0] s_cbr_axi4_awcache          ;
 wire                           [01-1:0] s_cbr_axi4_awvalid          ; 
 wire                           [01-1:0] s_cbr_axi4_awready          ; 
 
-wire                        [01*512-1:0] s_cbr_axi4_wdata            ;
-wire                        [01*64-1:0] s_cbr_axi4_wstrob           ;
+wire                        [01*256-1:0] s_cbr_axi4_wdata            ;
+wire                        [01*32-1:0] s_cbr_axi4_wstrob           ;
 wire                           [01-1:0] s_cbr_axi4_wlast            ;
 wire                           [01-1:0] s_cbr_axi4_wvalid           ; 
 wire                           [01-1:0] s_cbr_axi4_wready           ; 
@@ -248,7 +248,7 @@ wire                           [01-1:0] m_cbr_axi4_arvalid          ;
 wire                           [01-1:0] m_cbr_axi4_arready          ; 
 
 wire                        [01*04-1:0] m_cbr_axi4_rid              ; 
-wire                        [01*512-1:0] m_cbr_axi4_rdata            ;  
+wire                        [01*256-1:0] m_cbr_axi4_rdata            ;  
 wire                         [01*2-1:0] m_cbr_axi4_rresp            ;  
 wire                           [01-1:0] m_cbr_axi4_rlast            ;  
 wire                           [01-1:0] m_cbr_axi4_rvalid           ; 
@@ -264,8 +264,8 @@ wire                         [01*4-1:0] m_cbr_axi4_awcache          ;
 wire                           [01-1:0] m_cbr_axi4_awvalid          ; 
 wire                           [01-1:0] m_cbr_axi4_awready          ; 
 
-wire                        [01*512-1:0] m_cbr_axi4_wdata            ;
-wire                        [01*64-1:0] m_cbr_axi4_wstrob           ;
+wire                        [01*256-1:0] m_cbr_axi4_wdata            ;
+wire                        [01*32-1:0] m_cbr_axi4_wstrob           ;
 wire                           [01-1:0] m_cbr_axi4_wlast            ;
 wire                           [01-1:0] m_cbr_axi4_wvalid           ; 
 wire                           [01-1:0] m_cbr_axi4_wready           ; 
@@ -287,7 +287,7 @@ wire                                    m00_cbr_axi4_arvalid              ;
 wire                                    m00_cbr_axi4_arready              ; 
 
 wire                              [03:0] m00_cbr_axi4_rid                  ; 
-wire                              [511:0] m00_cbr_axi4_rdata                ;  
+wire                              [255:0] m00_cbr_axi4_rdata                ;  
 wire                              [ 1:0] m00_cbr_axi4_rresp                ;  
 wire                                     m00_cbr_axi4_rlast                ; 
 wire                                     m00_cbr_axi4_rvalid               ; 
@@ -303,8 +303,8 @@ wire                              [ 3:0] m00_cbr_axi4_awcache              ;
 wire                                    m00_cbr_axi4_awvalid              ; 
 wire                                    m00_cbr_axi4_awready              ; 
 
-wire                             [511:0] m00_cbr_axi4_wdata                ; 
-wire                             [63:0] m00_cbr_axi4_wstrob               ; 
+wire                             [255:0] m00_cbr_axi4_wdata                ; 
+wire                             [31:0] m00_cbr_axi4_wstrob               ; 
 wire                                    m00_cbr_axi4_wlast                ; 
 wire                                    m00_cbr_axi4_wvalid               ; 
 wire                                    m00_cbr_axi4_wready               ; 
@@ -326,7 +326,7 @@ wire                                    m00_dcv_axi4_arvalid              ;
 wire                                    m00_dcv_axi4_arready              ; 
 
 wire                              [03:0] m00_dcv_axi4_rid                  ; 
-wire                              [255:0] m00_dcv_axi4_rdata                ;  
+wire                              [511:0] m00_dcv_axi4_rdata                ;  
 wire                              [ 1:0] m00_dcv_axi4_rresp                ;  
 wire                                     m00_dcv_axi4_rlast                ; 
 wire                                     m00_dcv_axi4_rvalid               ; 
@@ -342,8 +342,8 @@ wire                              [ 3:0] m00_dcv_axi4_awcache              ;
 wire                                    m00_dcv_axi4_awvalid              ; 
 wire                                    m00_dcv_axi4_awready              ; 
 
-wire                             [255:0] m00_dcv_axi4_wdata                ; 
-wire                             [31:0] m00_dcv_axi4_wstrob               ; 
+wire                             [511:0] m00_dcv_axi4_wdata                ; 
+wire                             [63:0] m00_dcv_axi4_wstrob               ; 
 wire                                     m00_dcv_axi4_wlast                ; 
 wire                                    m00_dcv_axi4_wvalid               ; 
 wire                                    m00_dcv_axi4_wready               ; 
@@ -439,7 +439,7 @@ assign s_cbr_axi4_arvalid[ 0] = s00_dcv_axi4_arvalid;
 assign s00_dcv_axi4_arready = s_cbr_axi4_arready[ 0];
 
 assign s00_dcv_axi4_rid = s_cbr_axi4_rid[ 0* 4+: 4];
-assign s00_dcv_axi4_rdata = s_cbr_axi4_rdata[ 0*512+:512];
+assign s00_dcv_axi4_rdata = s_cbr_axi4_rdata[ 0*256+:256];
 assign s00_dcv_axi4_rresp = s_cbr_axi4_rresp[ 0*2+:2];
 assign s00_dcv_axi4_rlast = s_cbr_axi4_rlast[ 0];
 assign s00_dcv_axi4_rvalid = s_cbr_axi4_rvalid[ 0];
@@ -455,8 +455,8 @@ assign s_cbr_axi4_awcache[ 0*4+:4] = s00_dcv_axi4_awcache;
 assign s_cbr_axi4_awvalid[ 0] = s00_dcv_axi4_awvalid;
 assign s00_dcv_axi4_awready = s_cbr_axi4_awready[ 0];
 
-assign s_cbr_axi4_wdata[ 0*512+:512] = s00_dcv_axi4_wdata;
-assign s_cbr_axi4_wstrob[ 0*64+:64] = s00_dcv_axi4_wstrob;
+assign s_cbr_axi4_wdata[ 0*256+:256] = s00_dcv_axi4_wdata;
+assign s_cbr_axi4_wstrob[ 0*32+:32] = s00_dcv_axi4_wstrob;
 assign s_cbr_axi4_wlast[ 0] = s00_dcv_axi4_wlast;
 assign s_cbr_axi4_wvalid[ 0] = s00_dcv_axi4_wvalid;
 assign s00_dcv_axi4_wready = s_cbr_axi4_wready[ 0];
@@ -471,7 +471,7 @@ axi_interconnect_crossbar #
     .NUM_MASTER                     (1                           ), 
     .WIDTH_ID                       (4                           ), 
     .WIDTH_ADDR                     (32                          ), 
-    .WIDTH_DATA                     (512                         ), 
+    .WIDTH_DATA                     (256                         ), 
     .WIDTH_AWUSER                   (0                           ), 
     .WIDTH_ARUSER                   (0                           ), 
     .WIDTH_WUSER                    (0                           ), 
@@ -579,7 +579,7 @@ assign m00_cbr_axi4_arvalid = m_cbr_axi4_arvalid[ 0];
 assign m_cbr_axi4_arready[ 0] = m00_cbr_axi4_arready;
 
 assign m_cbr_axi4_rid[ 0* 4+: 4] = m00_cbr_axi4_rid;
-assign m_cbr_axi4_rdata[ 0*512+:512] = m00_cbr_axi4_rdata;
+assign m_cbr_axi4_rdata[ 0*256+:256] = m00_cbr_axi4_rdata;
 assign m_cbr_axi4_rresp[ 0*2+:2] = m00_cbr_axi4_rresp;
 assign m_cbr_axi4_rlast[ 0] = m00_cbr_axi4_rlast;
 assign m_cbr_axi4_rvalid[ 0] = m00_cbr_axi4_rvalid;
@@ -595,8 +595,8 @@ assign m00_cbr_axi4_awcache = m_cbr_axi4_awcache[ 0*4+:4];
 assign m00_cbr_axi4_awvalid = m_cbr_axi4_awvalid[ 0];
 assign m_cbr_axi4_awready[ 0] = m00_cbr_axi4_awready;
 
-assign m00_cbr_axi4_wdata = m_cbr_axi4_wdata[ 0*512+:512];
-assign m00_cbr_axi4_wstrob = m_cbr_axi4_wstrob[ 0*64+:64];
+assign m00_cbr_axi4_wdata = m_cbr_axi4_wdata[ 0*256+:256];
+assign m00_cbr_axi4_wstrob = m_cbr_axi4_wstrob[ 0*32+:32];
 assign m00_cbr_axi4_wlast = m_cbr_axi4_wlast[ 0];
 assign m00_cbr_axi4_wvalid = m_cbr_axi4_wvalid[ 0];
 assign m_cbr_axi4_wready[ 0] = m00_cbr_axi4_wready;
@@ -609,8 +609,8 @@ axi_interconnect_width_convert #
 (
     .WIDTH_ID                       (4                           ), 
     .WIDTH_ADDR                     (32                          ), 
-    .WIDTH_SDATA                    (512                         ), 
-    .WIDTH_MDATA                    (256                         ), 
+    .WIDTH_SDATA                    (256                         ), 
+    .WIDTH_MDATA                    (512                         ), 
     .WIDTH_AWUSER                   (0                           ), 
     .WIDTH_ARUSER                   (0                           ), 
     .WIDTH_WUSER                    (0                           ), 
@@ -709,7 +709,7 @@ axi_interconnect_clock_convert #
 (
     .WIDTH_ID                       (4                           ), 
     .WIDTH_ADDR                     (32                          ), 
-    .WIDTH_DATA                     (256                         ), 
+    .WIDTH_DATA                     (512                         ), 
     .WIDTH_AWUSER                   (0                           ), 
     .WIDTH_ARUSER                   (0                           ), 
     .WIDTH_WUSER                    (0                           ), 
