@@ -21,26 +21,26 @@
 
 module axi_interconnect_clock_convert #
 (
-    parameter                           WIDTH_ID            = 4     ,
-    parameter                           WIDTH_ADDR          = 32    ,
-    parameter                           WIDTH_DATA          = 32    ,
-    parameter                           WIDTH_AWUSER        = 1     ,
-    parameter                           WIDTH_ARUSER        = 1     ,
-    parameter                           WIDTH_WUSER         = 1     ,
-    parameter                           WIDTH_RUSER         = 1     ,
-    parameter                           WIDTH_BUSER         = 1     ,
-    parameter                           HAS_LOCK            = 'd1   ,
-    parameter                           HAS_CACHE           = 'd1   ,
-    parameter                           HAS_PROT            = 'd1   ,
-    parameter                           HAS_QOS             = 'd1   ,
-    parameter                           HAS_REGION          = 'd1   ,
+    parameter                           WIDTH_ID = 4                ,
+    parameter                           WIDTH_ADDR = 32             ,
+    parameter                           WIDTH_DATA = 32             ,
+    parameter                           WIDTH_AWUSER = 1            ,
+    parameter                           WIDTH_ARUSER = 1            ,
+    parameter                           WIDTH_WUSER = 1             ,
+    parameter                           WIDTH_RUSER = 1             ,
+    parameter                           WIDTH_BUSER = 1             ,
+    parameter                           HAS_LOCK = 'd1              ,
+    parameter                           HAS_CACHE = 'd1             ,
+    parameter                           HAS_PROT = 'd1              ,
+    parameter                           HAS_QOS = 'd1               ,
+    parameter                           HAS_REGION = 'd1            ,
 
-    parameter                           W_ID                = (WIDTH_ID > 0) ? WIDTH_ID : 'd1,
-    parameter                           W_AWUSER            = (WIDTH_AWUSER > 0) ? WIDTH_AWUSER : 'd1,
-    parameter                           W_ARUSER            = (WIDTH_ARUSER > 0) ? WIDTH_ARUSER : 'd1,
-    parameter                           W_WUSER             = (WIDTH_WUSER > 0) ? WIDTH_WUSER : 'd1,
-    parameter                           W_RUSER             = (WIDTH_RUSER > 0) ? WIDTH_RUSER : 'd1,
-    parameter                           W_BUSER             = (WIDTH_BUSER > 0) ? WIDTH_BUSER : 'd1,
+    parameter                           W_ID = (WIDTH_ID > 0) ? WIDTH_ID : 'd1,
+    parameter                           W_AWUSER = (WIDTH_AWUSER > 0) ? WIDTH_AWUSER : 'd1,
+    parameter                           W_ARUSER = (WIDTH_ARUSER > 0) ? WIDTH_ARUSER : 'd1,
+    parameter                           W_WUSER = (WIDTH_WUSER > 0) ? WIDTH_WUSER : 'd1,
+    parameter                           W_RUSER = (WIDTH_RUSER > 0) ? WIDTH_RUSER : 'd1,
+    parameter                           W_BUSER = (WIDTH_BUSER > 0) ? WIDTH_BUSER : 'd1,
     parameter                           U_DLY = 1                     // 
 )
 (
@@ -187,6 +187,16 @@ wire                                    rfifo_full                  ;
 wire                                    rfifo_empty                 ; 
 wire              [WIDTH_RRESPINFO-1:0] s_rresp_info                ; 
 wire              [WIDTH_RRESPINFO-1:0] m_rresp_info                ; 
+wire                                    awfifo_wr_en                ; 
+wire                                    awfifo_rd_en                ; 
+wire                                    wfifo_wr_en                 ; 
+wire                                    wfifo_rd_en                 ; 
+wire                                    bfifo_wr_en                 ; 
+wire                                    bfifo_rd_en                 ; 
+wire                                    arfifo_wr_en                ; 
+wire                                    arfifo_rd_en                ; 
+wire                                    rfifo_wr_en                 ; 
+wire                                    rfifo_rd_en                 ; 
 
 
 assign s_axi4_awready = ~awfifo_full;
@@ -199,6 +209,17 @@ assign s_axi4_arready = ~arfifo_full;
 assign m_axi4_arvalid = ~arfifo_empty; 
 assign m_axi4_rready = ~rfifo_full;
 assign s_axi4_rvalid = ~rfifo_empty;
+
+assign awfifo_wr_en = s_axi4_awvalid && s_axi4_awready;
+assign awfifo_rd_en = m_axi4_awvalid && m_axi4_awready;
+assign wfifo_wr_en = s_axi4_wvalid && s_axi4_wready;
+assign wfifo_rd_en = m_axi4_wvalid && m_axi4_wready;
+assign bfifo_wr_en = m_axi4_bvalid && m_axi4_bready;
+assign bfifo_rd_en = s_axi4_bvalid && s_axi4_bready;
+assign arfifo_wr_en = s_axi4_arvalid && s_axi4_arready;
+assign arfifo_rd_en = m_axi4_arvalid && m_axi4_arready;
+assign rfifo_wr_en = m_axi4_rvalid && m_axi4_rready;
+assign rfifo_rd_en = s_axi4_rvalid && s_axi4_rready;
 
 assign s_waddr_info[WIDTH_ID+:WIDTH_ADDR] = s_axi4_awaddr;   
 assign s_waddr_info[(WIDTH_ID+WIDTH_ADDR)+:8] = s_axi4_awlen;   
@@ -395,16 +416,16 @@ u0_awfifo
 // ---------------------------------------------------------------------------------
 // Write Control & Status
 // ---------------------------------------------------------------------------------
-    .wr_en                          (s_axi4_awvalid&&s_axi4_awready), // (input )
+    .wr_en                          (awfifo_wr_en               ), // (input )
     .wr_data                        (s_waddr_info               ), // (input )
-    .prog_data                      (3                          ), // (input )
+    .prog_data                      (2'd3                       ), // (input )
     .wr_cnt                         (                           ), // (output)
     .full                           (awfifo_full                ), // (output)
     .pfull                          (                           ), // (output)
 // ---------------------------------------------------------------------------------
 // Read Control & Status
 // ---------------------------------------------------------------------------------
-    .rd_en                          (m_axi4_awvalid && m_axi4_awready), // (input )
+    .rd_en                          (awfifo_rd_en               ), // (input )
     .rd_data                        (m_waddr_info               ), // (output)
     .rd_cnt                         (                           ), // (output)
     .empty                          (awfifo_empty               ), // (output)
@@ -433,16 +454,16 @@ u0_wfifo
 // ---------------------------------------------------------------------------------
 // Write Control & Status
 // ---------------------------------------------------------------------------------
-    .wr_en                          (s_axi4_wvalid&&s_axi4_wready), // (input )
+    .wr_en                          (wfifo_wr_en                ), // (input )
     .wr_data                        (s_wdata_info               ), // (input )
-    .prog_data                      (3                          ), // (input )
+    .prog_data                      (2'd3                       ), // (input )
     .wr_cnt                         (                           ), // (output)
     .full                           (wfifo_full                 ), // (output)
     .pfull                          (                           ), // (output)
 // ---------------------------------------------------------------------------------
 // Read Control & Status
 // ---------------------------------------------------------------------------------
-    .rd_en                          (m_axi4_wvalid && m_axi4_wready), // (input )
+    .rd_en                          (wfifo_rd_en                ), // (input )
     .rd_data                        (m_wdata_info               ), // (output)
     .rd_cnt                         (                           ), // (output)
     .empty                          (wfifo_empty                ), // (output)
@@ -470,16 +491,16 @@ u0_bfifo
 // ---------------------------------------------------------------------------------
 // Write Control & Status
 // ---------------------------------------------------------------------------------
-    .wr_en                          (m_axi4_bvalid&&m_axi4_bready), // (input )
+    .wr_en                          (bfifo_wr_en                ), // (input )
     .wr_data                        (m_bresp_info               ), // (input )
-    .prog_data                      (3                          ), // (input )
+    .prog_data                      (2'd3                       ), // (input )
     .wr_cnt                         (                           ), // (output)
     .full                           (bfifo_full                 ), // (output)
     .pfull                          (                           ), // (output)
 // ---------------------------------------------------------------------------------
 // Read Control & Status
 // ---------------------------------------------------------------------------------
-    .rd_en                          (s_axi4_bvalid && s_axi4_bready), // (input )
+    .rd_en                          (bfifo_rd_en                ), // (input )
     .rd_data                        (s_bresp_info               ), // (output)
     .rd_cnt                         (                           ), // (output)
     .empty                          (bfifo_empty                ), // (output)
@@ -507,16 +528,16 @@ u0_arfifo
 // ---------------------------------------------------------------------------------
 // Write Control & Status
 // ---------------------------------------------------------------------------------
-    .wr_en                          (s_axi4_arvalid&&s_axi4_arready), // (input )
+    .wr_en                          (arfifo_wr_en               ), // (input )
     .wr_data                        (s_raddr_info               ), // (input )
-    .prog_data                      (3                          ), // (input )
+    .prog_data                      (2'd3                       ), // (input )
     .wr_cnt                         (                           ), // (output)
     .full                           (arfifo_full                ), // (output)
     .pfull                          (                           ), // (output)
 // ---------------------------------------------------------------------------------
 // Read Control & Status
 // ---------------------------------------------------------------------------------
-    .rd_en                          (m_axi4_arvalid && m_axi4_arready), // (input )
+    .rd_en                          (arfifo_rd_en               ), // (input )
     .rd_data                        (m_raddr_info               ), // (output)
     .rd_cnt                         (                           ), // (output)
     .empty                          (arfifo_empty               ), // (output)
@@ -544,16 +565,16 @@ u0_rfifo
 // ---------------------------------------------------------------------------------
 // Write Control & Status
 // ---------------------------------------------------------------------------------
-    .wr_en                          (m_axi4_rvalid&&m_axi4_rready), // (input )
+    .wr_en                          (rfifo_wr_en                ), // (input )
     .wr_data                        (m_rresp_info               ), // (input )
-    .prog_data                      (3                          ), // (input )
+    .prog_data                      (2'd3                       ), // (input )
     .wr_cnt                         (                           ), // (output)
     .full                           (rfifo_full                 ), // (output)
     .pfull                          (                           ), // (output)
 // ---------------------------------------------------------------------------------
 // Read Control & Status
 // ---------------------------------------------------------------------------------
-    .rd_en                          (s_axi4_rvalid && s_axi4_rready), // (input )
+    .rd_en                          (rfifo_rd_en                ), // (input )
     .rd_data                        (s_rresp_info               ), // (output)
     .rd_cnt                         (                           ), // (output)
     .empty                          (rfifo_empty                ), // (output)

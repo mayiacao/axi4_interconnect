@@ -21,15 +21,15 @@
 
 module axi_interconnect_crossbar_sreq_arbit #
 (
-    parameter                           MODE_READ           = 1     ,
-    parameter                           NUM_SLAVE           = 1     , // 0 ~ 4
-    parameter                           NUM_MASTER          = 1     , // 0 ~ 4
-    parameter                           WIDTH_ADDRINFO      = 64    ,   
-    parameter                           WIDTH_DATAINFO      = 48    ,
-    parameter                           NUM_OUTSTANDING     = 4     ,
-    parameter                           WIDTH_OUTSTANDING   = LOG2(NUM_OUTSTANDING-1),
-    parameter                           WIDTH_SALVE         = LOG2(NUM_SLAVE-1),
-    parameter                           WIDTH_MASTER        = LOG2(NUM_MASTER-1),
+    parameter                           MODE_READ = 1               ,
+    parameter                           NUM_SLAVE = 1               , // 0 ~ 4
+    parameter                           NUM_MASTER = 1              , // 0 ~ 4
+    parameter                           WIDTH_ADDRINFO = 64         ,
+    parameter                           WIDTH_DATAINFO = 48         ,
+    parameter                           NUM_OUTSTANDING = 4         ,
+    parameter                           WIDTH_OUTSTANDING = LOG2(NUM_OUTSTANDING-1),
+    parameter                           WIDTH_SALVE = LOG2(NUM_SLAVE-1),
+    parameter                           WIDTH_MASTER = LOG2(NUM_MASTER-1),
     parameter                           U_DLY = 1                      
 )
 (
@@ -41,7 +41,7 @@ module axi_interconnect_crossbar_sreq_arbit #
 // ---------------------------------------------------------------------------------
 // Slave Port
 // ---------------------------------------------------------------------------------
-    input     [NUM_SLAVE*WIDTH_ADDRINFO-1:0] s_addr_info            , 
+    input [NUM_SLAVE*WIDTH_ADDRINFO-1:0] s_addr_info                ,
     input               [NUM_SLAVE-1:0] s_addr_valid                , 
     output reg          [NUM_SLAVE-1:0] s_addr_ready                , 
 
@@ -62,15 +62,24 @@ module axi_interconnect_crossbar_sreq_arbit #
 
 reg                   [WIDTH_SALVE-1:0] luser                       ; 
 (*keep = "true",mark_debug = "true"*) wire                  [WIDTH_SALVE-1:0] cuser                       ; 
+wire                                    ififo_full                  ; 
+wire                                    ififo_wren_busy             ; 
+wire                                    addr_accept_ready           ; 
 genvar                                  i                           ;
 
+localparam                           WDATA_FIFO_AW = WIDTH_OUTSTANDING+WIDTH_MASTER;
+localparam              [NUM_SLAVE-1:0] SLAVE_ONEHOT_ONE            = {{(NUM_SLAVE-1){1'b0}},1'b1};
+localparam          [WDATA_FIFO_AW-1:0] WDATA_IFIFO_PROG            = {{(WDATA_FIFO_AW-1){1'b0}},1'b1};
+localparam          [WDATA_FIFO_AW-1:0] WDATA_DFIFO_PROG            = ~WDATA_IFIFO_PROG;
+
+assign addr_accept_ready = addr_ready && ((MODE_READ != 0) || (~ififo_full && ~ififo_wren_busy));
 
 always @ (posedge clk_sys or negedge rst_n) begin
     if(~rst_n)
         luser <= #U_DLY {WIDTH_SALVE{1'b1}};
        // luser <= #U_DLY 'd0;
     else begin
-        if(addr_ready)
+        if(addr_accept_ready)
             luser <= #U_DLY cuser;
         else
             ;
@@ -78,8 +87,8 @@ always @ (posedge clk_sys or negedge rst_n) begin
 end
 
 always @ (*)  begin
-    if(addr_ready)
-        s_addr_ready = 1'd1 << cuser;
+    if(addr_accept_ready)
+        s_addr_ready = SLAVE_ONEHOT_ONE << cuser;
     else
         s_addr_ready = 'd0;
 end
@@ -90,7 +99,7 @@ always @ (posedge clk_sys or negedge rst_n) begin
         addr_valid <= #U_DLY 'd0;
     end
     else begin
-        if(addr_ready)
+        if(addr_accept_ready)
             addr_info <= #U_DLY {s_addr_info[cuser*WIDTH_ADDRINFO+:WIDTH_ADDRINFO],cuser};
         else
             ;
@@ -102,7 +111,7 @@ always @ (posedge clk_sys or negedge rst_n) begin
 //        else
 //            ;
 
-        if(s_addr_valid[cuser])
+        if(addr_accept_ready && s_addr_valid[cuser])
             addr_valid <= #U_DLY 'd1;
         else if(addr_ready && addr_valid)
             addr_valid <= #U_DLY 'd0;
@@ -134,7 +143,7 @@ if(MODE_READ == 0) begin:wdata_if
 
 (*keep = "true",mark_debug = "true"*) reg                     [NUM_SLAVE-1:0] ififo_wren_temp             ; 
 (*keep = "true",mark_debug = "true"*) wire                                    ififo_wren                  ;
-(*keep = "true",mark_debug = "true"*) reg                                     ififo_rden                  ; 
+(*keep = "true",mark_debug = "true"*) wire                                    ififo_rden                  ; 
 (*keep = "true",mark_debug = "true"*) wire                  [WIDTH_SALVE-1:0] ififo_rddata                ; 
 (*keep = "true",mark_debug = "true"*) wire                                    ififo_empty                 ; 
 
@@ -159,21 +168,17 @@ end
 end 
 
 assign ififo_wren = |ififo_wren_temp;
+assign ififo_wren_busy = ififo_wren;
 
 always @ (*) begin
 if(~ififo_empty && (~dfifo_pfull))
-    s_wdata_ready = 1'd1 << ififo_rddata;
+    s_wdata_ready = SLAVE_ONEHOT_ONE << ififo_rddata;
 else
     s_wdata_ready = 'd0;
 end
 
-always @ (*) begin
-    if(s_wdata_info[ififo_rddata*WIDTH_DATAINFO+(WIDTH_DATAINFO-1)] && 
-       s_wdata_valid[ififo_rddata] && s_wdata_ready[ififo_rddata])
-        ififo_rden <= #U_DLY 'd1;
-    else
-        ififo_rden <= #U_DLY 'd0;
-end
+assign ififo_rden = s_wdata_info[ififo_rddata*WIDTH_DATAINFO+(WIDTH_DATAINFO-1)] &&
+                    s_wdata_valid[ififo_rddata] && s_wdata_ready[ififo_rddata];
 
 always @ (posedge clk_sys or negedge rst_n) begin
     if(~rst_n) begin
@@ -195,7 +200,7 @@ assign wdata_valid = ~dfifo_empty;
 axi_interconnect_fifogen #
 (
     .PA_DW                          (WIDTH_SALVE                ), // It must be a multiple of 8.
-    .PA_AW                          (WIDTH_OUTSTANDING+WIDTH_MASTER), // Must not be less than log2(PB_DW/PA_DW).
+    .PA_AW                          (WDATA_FIFO_AW              ), // Must not be less than log2(PB_DW/PA_DW).
     .PB_DW                          (WIDTH_SALVE                ), // It must be a multiple of PA_DW.
     .RD_AS_ACK                      ("TRUE"                     ), // "TRUE" OR "FALSE"
     .CLOCK_ASYNC                    ("FALSE"                    ), // 
@@ -207,16 +212,16 @@ u0_axi_interconnect_fifogen
 // CLock & Reset
 // ---------------------------------------------------------------------------------
     .clk_wr                         (clk_sys                    ), // (input )
-    .clk_rd                         ('d0                        ), // (input )
+    .clk_rd                         (clk_sys                    ), // (input )
     .rst_n                          (rst_n                      ), // (input )
 // ---------------------------------------------------------------------------------
 // Write Control & Status
 // ---------------------------------------------------------------------------------
     .wr_en                          (ififo_wren                 ), // (input )
     .wr_data                        (luser                      ), // (input )
-    .prog_data                      ('d1                        ), // (input )
+    .prog_data                      (WDATA_IFIFO_PROG           ), // (input )
     .wr_cnt                         (                           ), // (output)
-    .full                           (                           ), // (output)
+    .full                           (ififo_full                 ), // (output)
     .pfull                          (                           ), // (output)
 // ---------------------------------------------------------------------------------
 // Read Control & Status
@@ -230,9 +235,9 @@ u0_axi_interconnect_fifogen
 
 axi_interconnect_fifogen #
 (
-    .PA_DW                          (WIDTH_DATAINFO                ), // It must be a multiple of 8.
-    .PA_AW                          (WIDTH_OUTSTANDING+WIDTH_MASTER), // Must not be less than log2(PB_DW/PA_DW).
-    .PB_DW                          (WIDTH_DATAINFO                ), // It must be a multiple of PA_DW.
+    .PA_DW                          (WIDTH_DATAINFO             ), // It must be a multiple of 8.
+    .PA_AW                          (WDATA_FIFO_AW              ), // Must not be less than log2(PB_DW/PA_DW).
+    .PB_DW                          (WIDTH_DATAINFO             ), // It must be a multiple of PA_DW.
     .RD_AS_ACK                      ("TRUE"                     ), // "TRUE" OR "FALSE"
     .CLOCK_ASYNC                    ("FALSE"                    ), // 
     .U_DLY                          (U_DLY                      )  // 
@@ -243,14 +248,14 @@ u1_axi_interconnect_fifogen
 // CLock & Reset
 // ---------------------------------------------------------------------------------
     .clk_wr                         (clk_sys                    ), // (input )
-    .clk_rd                         ('d0                        ), // (input )
+    .clk_rd                         (clk_sys                    ), // (input )
     .rst_n                          (rst_n                      ), // (input )
 // ---------------------------------------------------------------------------------
 // Write Control & Status
 // ---------------------------------------------------------------------------------
     .wr_en                          (dfifo_wren                 ), // (input )
     .wr_data                        (dfifo_wrdata               ), // (input )
-    .prog_data                      (('d1<<(WIDTH_OUTSTANDING+WIDTH_MASTER))-'d2), // (input )
+    .prog_data                      (WDATA_DFIFO_PROG           ), // (input )
     .wr_cnt                         (                           ), // (output)
     .full                           (                           ), // (output)
     .pfull                          (dfifo_pfull                ), // (output)
@@ -266,9 +271,11 @@ u1_axi_interconnect_fifogen
 
 end else begin:rdata_if
 
+assign ififo_full = 1'b0;
+assign ififo_wren_busy = 1'b0;
 always @ (*) s_wdata_ready = 'd0;
-assign wdata_info = 'd0;
-assign wdata_valid = 'd0;
+assign wdata_info = {WIDTH_DATAINFO{1'b0}};
+assign wdata_valid = 1'b0;
 
 end
 endgenerate

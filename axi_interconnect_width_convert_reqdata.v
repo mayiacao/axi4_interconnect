@@ -21,11 +21,11 @@
 
 module axi_interconnect_width_convert_reqdata #
 (
-    parameter                           WIDTH_SDATA         = 32    ,
-    parameter                           WIDTH_MDATA         = 32    ,
-    parameter                           WIDTH_DUSER         = 1     ,
-    parameter                           WIDTH_OUTSTANDING   = 2     ,
-    parameter                           W_DUSER             = (WIDTH_DUSER > 0) ? WIDTH_DUSER : 'd1,
+    parameter                           WIDTH_SDATA = 32            ,
+    parameter                           WIDTH_MDATA = 32            ,
+    parameter                           WIDTH_DUSER = 1             ,
+    parameter                           WIDTH_OUTSTANDING = 2       ,
+    parameter                           W_DUSER = (WIDTH_DUSER > 0) ? WIDTH_DUSER : 'd1,
     parameter                           U_DLY = 1                     // 
 )
 (
@@ -66,6 +66,7 @@ localparam NUM_SUB = (WIDTH_SDATA > WIDTH_MDATA) ? WIDTH_SDATA/WIDTH_MDATA : WID
 localparam WIDTH_SUB = CLOG2(NUM_SUB);
 localparam WIDTH_SBYTE = CLOG2(WIDTH_SDATA/8);
 localparam WIDTH_MBYTE = CLOG2(WIDTH_MDATA/8);
+localparam WIDTH_DFIFO = WIDTH_MDATA+WIDTH_MDATA/8+1+WIDTH_DUSER;
 
 localparam WIDTH_BYTE = (WIDTH_SBYTE >= WIDTH_MBYTE) ? WIDTH_SBYTE : WIDTH_MBYTE;
 
@@ -88,16 +89,21 @@ wire                              [7:0] mlen_data                   ;
 reg                               [7:0] mlen_cnt                    ; 
 
 wire                                    ififo_rden                  ; 
+wire                             [21:0] ififo_wrdata                ; 
 wire                             [21:0] ififo_rddata                ; 
 wire                                    ififo_empty                 ; 
 
 reg                                     dfifo_wren                  ; 
-reg  [WIDTH_MDATA+WIDTH_MDATA/8+WIDTH_DUSER:0] dfifo_wrdata         ; 
-wire [WIDTH_MDATA+WIDTH_MDATA/8+WIDTH_DUSER:0] dfifo_rddata         ; 
+reg                    [WIDTH_DFIFO-1:0] dfifo_wrdata               ; 
+wire                   [WIDTH_DFIFO-1:0] dfifo_rddata               ; 
 wire                                    dfifo_pfull                 ; 
 wire                                    dfifo_empty                 ; 
 
 genvar                                  i                           ;
+
+localparam      [WIDTH_OUTSTANDING-1:0] OUTSTANDING_PROG_ONE        = {{(WIDTH_OUTSTANDING-1){1'b0}},1'b1};
+
+assign ififo_wrdata = {split_reqsize,split_size,split_len,split_offset};
 
 always @ (posedge clk_sys or negedge rst_n) begin
     if(~rst_n)
@@ -130,7 +136,7 @@ always @ (posedge clk_sys or negedge rst_n) begin
     end
     else begin
         if(cstate == IDLE)
-            stp_data <= #U_DLY (1'd1 << stp_size) - 'd1;
+            stp_data <= #U_DLY (1 << stp_size) - 1;
         else
             ;
         
@@ -152,7 +158,7 @@ always @ (posedge clk_sys or negedge rst_n) begin
         if(cstate == LOAD)
             mux_cnt <= #U_DLY mux_data;
         else if(~dfifo_pfull && s_reqdvalid && (cstate == WAIT))
-            mux_cnt <= #U_DLY mux_cnt + (1'b1 << stp_reqsize);
+            mux_cnt <= #U_DLY mux_cnt + (1 << stp_reqsize);
         else
             ;
     end
@@ -347,9 +353,9 @@ assign m_reqdwvalid = ~dfifo_empty;
 
 axi_interconnect_fifogen #
 (
-    .PA_DW                          (WIDTH_MDATA+WIDTH_MDATA/8+1+WIDTH_DUSER), // It must be a multiple of 8.
+    .PA_DW                          (WIDTH_DFIFO                ), // It must be a multiple of 8.
     .PA_AW                          (2                          ), 
-    .PB_DW                          (WIDTH_MDATA+WIDTH_MDATA/8+1+WIDTH_DUSER), // It must be a multiple of PA_DW.
+    .PB_DW                          (WIDTH_DFIFO                ), // It must be a multiple of PA_DW.
     .RD_AS_ACK                      ("TRUE"                     ), // "TRUE" OR "FALSE"
     .CLOCK_ASYNC                    ("FALSE"                    ), // 
     .U_DLY                          (U_DLY                      )  // 
@@ -360,14 +366,14 @@ u0_axi_interconnect_fifogen
 // CLock & Reset
 // ---------------------------------------------------------------------------------
     .clk_wr                         (clk_sys                    ), // (input )
-    .clk_rd                         ('d0                        ), // (input )
+    .clk_rd                         (clk_sys                    ), // (input )
     .rst_n                          (rst_n                      ), // (input )
 // ---------------------------------------------------------------------------------
 // Write Control & Status
 // ---------------------------------------------------------------------------------
     .wr_en                          (dfifo_wren                 ), // (input )
     .wr_data                        (dfifo_wrdata               ), // (input )
-    .prog_data                      ('d2                        ), // (input )
+    .prog_data                      (2'd2                       ), // (input )
     .wr_cnt                         (                           ), // (output)
     .full                           (                           ), // (output)
     .pfull                          (dfifo_pfull                ), // (output)
@@ -396,14 +402,14 @@ u1_axi_interconnect_fifogen
 // CLock & Reset
 // ---------------------------------------------------------------------------------
     .clk_wr                         (clk_sys                    ), // (input )
-    .clk_rd                         ('d0                        ), // (input )
+    .clk_rd                         (clk_sys                    ), // (input )
     .rst_n                          (rst_n                      ), // (input )
 // ---------------------------------------------------------------------------------
 // Write Control & Status
 // ---------------------------------------------------------------------------------
     .wr_en                          (split_en                   ), // (input )
-    .wr_data                        ({split_reqsize,split_size,split_len,split_offset}), // (input )
-    .prog_data                      ('d1                        ), // (input )
+    .wr_data                        (ififo_wrdata               ), // (input )
+    .prog_data                      (OUTSTANDING_PROG_ONE       ), // (input )
     .wr_cnt                         (                           ), // (output)
     .full                           (                           ), // (output)
     .pfull                          (                           ), // (output)

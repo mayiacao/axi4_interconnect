@@ -21,31 +21,31 @@
 
 module axi_interconnect_crossbar #
 (
-    parameter                           NUM_SLAVE           = 1     , // 0 ~ 4
-    parameter                           NUM_MASTER          = 4     , // 0 ~ 4
-    parameter                           WIDTH_ID            = 4     ,
-    parameter                           WIDTH_ADDR          = 32    ,
-    parameter                           WIDTH_DATA          = 32    ,
-    parameter                           WIDTH_AWUSER        = 1     ,
-    parameter                           WIDTH_ARUSER        = 1     ,
-    parameter                           WIDTH_WUSER         = 1     ,
-    parameter                           WIDTH_RUSER         = 1     ,
-    parameter                           WIDTH_BUSER         = 1     ,
-    parameter                           NUM_OUTSTANDING     = 4     ,
+    parameter                           NUM_SLAVE = 1               , // 0 ~ 4
+    parameter                           NUM_MASTER = 4              , // 0 ~ 4
+    parameter                           WIDTH_ID = 4                ,
+    parameter                           WIDTH_ADDR = 32             ,
+    parameter                           WIDTH_DATA = 32             ,
+    parameter                           WIDTH_AWUSER = 1            ,
+    parameter                           WIDTH_ARUSER = 1            ,
+    parameter                           WIDTH_WUSER = 1             ,
+    parameter                           WIDTH_RUSER = 1             ,
+    parameter                           WIDTH_BUSER = 1             ,
+    parameter                           NUM_OUTSTANDING = 4         ,
     parameter [NUM_MASTER*WIDTH_ADDR-1:0] ADDR_BASE         = 'd0   , 
     parameter [NUM_MASTER*WIDTH_ADDR-1:0] ADDR_HIGH         = 'd0   ,
-    parameter                           HAS_LOCK            = 'd1   ,
-    parameter                           HAS_CACHE           = 'd1   ,
-    parameter                           HAS_PROT            = 'd1   ,
-    parameter                           HAS_QOS             = 'd1   ,
-    parameter                           HAS_REGION          = 'd1   ,
+    parameter                           HAS_LOCK = 'd1              ,
+    parameter                           HAS_CACHE = 'd1             ,
+    parameter                           HAS_PROT = 'd1              ,
+    parameter                           HAS_QOS = 'd1               ,
+    parameter                           HAS_REGION = 'd1            ,
 
-    parameter                           W_ID                = (WIDTH_ID > 0) ? WIDTH_ID : 'd1,
-    parameter                           W_AWUSER            = (WIDTH_AWUSER > 0) ? WIDTH_AWUSER : 'd1,
-    parameter                           W_ARUSER            = (WIDTH_ARUSER > 0) ? WIDTH_ARUSER : 'd1,
-    parameter                           W_WUSER             = (WIDTH_WUSER > 0) ? WIDTH_WUSER : 'd1,
-    parameter                           W_RUSER             = (WIDTH_RUSER > 0) ? WIDTH_RUSER : 'd1,
-    parameter                           W_BUSER             = (WIDTH_BUSER > 0) ? WIDTH_BUSER : 'd1,
+    parameter                           W_ID = (WIDTH_ID > 0) ? WIDTH_ID : 'd1,
+    parameter                           W_AWUSER = (WIDTH_AWUSER > 0) ? WIDTH_AWUSER : 'd1,
+    parameter                           W_ARUSER = (WIDTH_ARUSER > 0) ? WIDTH_ARUSER : 'd1,
+    parameter                           W_WUSER = (WIDTH_WUSER > 0) ? WIDTH_WUSER : 'd1,
+    parameter                           W_RUSER = (WIDTH_RUSER > 0) ? WIDTH_RUSER : 'd1,
+    parameter                           W_BUSER = (WIDTH_BUSER > 0) ? WIDTH_BUSER : 'd1,
 
     parameter                           U_DLY = 1                     // 
 )
@@ -575,8 +575,8 @@ u1_axi_interconnect_crossbar_switch
     .s_addr_valid                   (s_raddr_valid              ), // (input )
     .s_addr_ready                   (s_raddr_ready              ), // (output)
 
-    .s_wdata_info                   ('d0                        ), // (input )
-    .s_wdata_valid                  ('d0                        ), // (input )
+    .s_wdata_info                   ({NUM_SLAVE{1'b0}}          ), // (input )
+    .s_wdata_valid                  ({NUM_SLAVE{1'b0}}          ), // (input )
     .s_wdata_ready                  (                           ), // (output)
 
     .s_resp_info                    (s_rresp_info               ), // (output)
@@ -591,7 +591,7 @@ u1_axi_interconnect_crossbar_switch
 
     .m_wdata_info                   (                           ), // (output)
     .m_wdata_valid                  (                           ), // (output)
-    .m_wdata_ready                  ('d0                        ), // (input )
+    .m_wdata_ready                  ({NUM_MASTER{1'b0}}         ), // (input )
 
     .m_resp_info                    (m_rresp_info               ), // (input )
     .m_resp_ready                   (m_rresp_ready              ), // (output)

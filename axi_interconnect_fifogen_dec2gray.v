@@ -62,7 +62,7 @@ reg                            [DW-1:0] odata_reg                   ;
 always @ (*) odata_tmp = {1'b0,idata[DW-1:1]} ^ idata[DW-1:0];
 
 always @ (posedge clk_sys or negedge rst_n) begin
-    if(rst_n == 1'b0)
+    if(~rst_n)
         odata_reg <= #U_DLY {DW{1'd0}};
     else
         odata_reg <= #U_DLY odata_tmp;
@@ -79,7 +79,7 @@ reg                            [DW-1:0] odata_reg [PIPLE_LINE-1:0]  ;
 always @ (*) odata_tmp = {1'b0,idata[DW-1:1]} ^ idata[DW-1:0];
 
 always @ (posedge clk_sys or negedge rst_n) begin
-    if(rst_n == 1'b0)
+    if(~rst_n)
         odata_reg[PIPLE_LINE-1] <= #U_DLY {DW{1'd0}};
     else
         odata_reg[PIPLE_LINE-1] <= #U_DLY odata_tmp;
@@ -88,7 +88,7 @@ end
 for(i=0;i<PIPLE_LINE-1;i=i+1) begin:piple_loop
 
 always @ (posedge clk_sys or negedge rst_n) begin
-    if(rst_n == 1'b0)
+    if(~rst_n)
         odata_reg[i] <= #U_DLY {DW{1'd0}};
     else
         odata_reg[i] <= #U_DLY odata_reg[i+1];

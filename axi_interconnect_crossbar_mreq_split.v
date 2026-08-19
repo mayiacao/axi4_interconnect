@@ -21,18 +21,18 @@
 
 module axi_interconnect_crossbar_mreq_split #
 (
-    parameter                           MODE_READ           = 1     ,
-    parameter                           NUM_SLAVE           = 1     , // 0 ~ 4
-    parameter                           NUM_MASTER          = 1     , // 0 ~ 4
-    parameter                           WIDTH_ID            = 4     ,
-    parameter                           WIDTH_ADDR          = 32    ,
-    parameter                           WIDTH_ADDRINFO      = 64    ,   
-    parameter                           WIDTH_DATAINFO      = 48    ,
+    parameter                           MODE_READ = 1               ,
+    parameter                           NUM_SLAVE = 1               , // 0 ~ 4
+    parameter                           NUM_MASTER = 1              , // 0 ~ 4
+    parameter                           WIDTH_ID = 4                ,
+    parameter                           WIDTH_ADDR = 32             ,
+    parameter                           WIDTH_ADDRINFO = 64         ,
+    parameter                           WIDTH_DATAINFO = 48         ,
     parameter [NUM_MASTER*WIDTH_ADDR-1:0] ADDR_BASE         = 'd0   , 
     parameter [NUM_MASTER*WIDTH_ADDR-1:0] ADDR_HIGH         = 'd0   , 
-    parameter                           NUM_OUTSTANDING     = 4     ,
-    parameter                           WIDTH_OUTSTANDING   = LOG2(NUM_OUTSTANDING-1),
-    parameter                           WIDTH_SALVE         = LOG2(NUM_SLAVE-1),
+    parameter                           NUM_OUTSTANDING = 4         ,
+    parameter                           WIDTH_OUTSTANDING = LOG2(NUM_OUTSTANDING-1),
+    parameter                           WIDTH_SALVE = LOG2(NUM_SLAVE-1),
     parameter                           U_DLY = 1                     // 
 )
 (
@@ -44,7 +44,7 @@ module axi_interconnect_crossbar_mreq_split #
 // ---------------------------------------------------------------------------------
 // Slave Port
 // ---------------------------------------------------------------------------------
-    input     [WIDTH_ADDRINFO+WIDTH_SALVE-1:0] addr_info            , 
+    input [WIDTH_ADDRINFO+WIDTH_SALVE-1:0] addr_info                ,
     input                               addr_valid                  , 
     output                              addr_ready                  , 
 
@@ -54,7 +54,7 @@ module axi_interconnect_crossbar_mreq_split #
 // ---------------------------------------------------------------------------------
 // Master Port
 // ---------------------------------------------------------------------------------
-    output     [NUM_MASTER*WIDTH_ADDRINFO-1:0] m_addr_info          , 
+    output [NUM_MASTER*WIDTH_ADDRINFO-1:0] m_addr_info              ,
     output             [NUM_MASTER-1:0] m_addr_valid                , 
     input              [NUM_MASTER-1:0] m_addr_ready                , 
 
@@ -65,10 +65,8 @@ module axi_interconnect_crossbar_mreq_split #
 // Request Queen
 // ---------------------------------------------------------------------------------
     output reg                          req_wren                    , 
-    output reg [NUM_MASTER+WIDTH_SALVE+WIDTH_ID:0] req_id                        
+    output reg [NUM_MASTER+WIDTH_SALVE+WIDTH_ID:0] req_id           
 );
-
-localparam [NUM_MASTER*WIDTH_ADDR-1:0] ADDR_MASK = ADDR_BASE ^ ADDR_HIGH;
 
 wire                                    dfifo_full                  ; 
 wire   [WIDTH_ADDRINFO+WIDTH_SALVE-1:0] dfifo_rddata                ; 
@@ -79,9 +77,13 @@ wire                   [WIDTH_ADDR-1:0] req_addr                    ;
 wire                                    reqfifo_en                  ; 
 wire                   [NUM_MASTER-1:0] reqfifo_rddata              ; 
 wire                                    reqfifo_empty               ; 
+wire                                    reqfifo_full                ; 
+wire                                    dififo_full                 ; 
 wire                   [NUM_MASTER-1:0] m_addr_ready_mask           ; 
 
 genvar                                  i                           ;
+
+localparam      [WIDTH_OUTSTANDING-1:0] OUTSTANDING_PROG_ONE        = {{(WIDTH_OUTSTANDING-1){1'b0}},1'b1};
 
 assign req_addr = addr_info[(WIDTH_ID+WIDTH_SALVE)+:WIDTH_ADDR];
 
@@ -107,24 +109,15 @@ always @ (posedge clk_sys or negedge rst_n) begin
     end
 end
 
-wire [NUM_MASTER*WIDTH_ADDR-1:0] targ_addr ;
-wire [NUM_MASTER*WIDTH_ADDR-1:0] user_addr ;
-
 generate
 for(i=0;i<NUM_MASTER;i=i+1)begin:mst_loop
-
-
-
-assign user_addr[i*WIDTH_ADDR+:WIDTH_ADDR] = ~ADDR_MASK[i*WIDTH_ADDR+:WIDTH_ADDR] & req_addr;
-assign targ_addr[i*WIDTH_ADDR+:WIDTH_ADDR] = ~ADDR_MASK[i*WIDTH_ADDR+:WIDTH_ADDR] & ADDR_BASE[i*WIDTH_ADDR+:WIDTH_ADDR];
 
 always @ (posedge clk_sys or negedge rst_n) begin
     if(~rst_n)
         addr_match[i] <= #U_DLY 'd0;
     else begin
-//        if((~ADDR_MASK[i*WIDTH_ADDR+:WIDTH_ADDR] & req_addr) == 
-//            (~ADDR_MASK[i*WIDTH_ADDR+:WIDTH_ADDR] & ADDR_BASE[i*WIDTH_ADDR+:WIDTH_ADDR]))
-          if(targ_addr[i*WIDTH_ADDR+:WIDTH_ADDR] == user_addr[i*WIDTH_ADDR+:WIDTH_ADDR])
+        if((req_addr >= ADDR_BASE[i*WIDTH_ADDR+:WIDTH_ADDR]) &&
+           (req_addr <= ADDR_HIGH[i*WIDTH_ADDR+:WIDTH_ADDR]))
             addr_match[i] <= #U_DLY 'd1;
         else
             addr_match[i] <= #U_DLY 'd0;
@@ -181,14 +174,14 @@ u0_datafifo
 // CLock & Reset
 // ---------------------------------------------------------------------------------
     .clk_wr                         (clk_sys                    ), // (input )
-    .clk_rd                         ('d0                        ), // (input )
+    .clk_rd                         (clk_sys                    ), // (input )
     .rst_n                          (rst_n                      ), // (input )
 // ---------------------------------------------------------------------------------
 // Write Control & Status
 // ---------------------------------------------------------------------------------
     .wr_en                          (addr_valid&addr_ready      ), // (input )
     .wr_data                        (addr_info                  ), // (input )
-    .prog_data                      ('d1                        ), // (input )
+    .prog_data                      (1'b1                       ), // (input )
     .wr_cnt                         (                           ), // (output)
     .full                           (dfifo_full                 ), // (output)
     .pfull                          (                           ), // (output)
@@ -202,7 +195,8 @@ u0_datafifo
     .aempty                         (                           )  // (output)
 );
 
-assign addr_ready = ~dfifo_full;
+assign addr_ready = ~dfifo_full && ~reqfifo_full && ~reqfifo_wren &&
+                    ((MODE_READ != 0) || ~dififo_full);
 
 axi_interconnect_fifogen #
 (
@@ -219,16 +213,16 @@ u0_infofifo
 // CLock & Reset
 // ---------------------------------------------------------------------------------
     .clk_wr                         (clk_sys                    ), // (input )
-    .clk_rd                         ('d0                        ), // (input )
+    .clk_rd                         (clk_sys                    ), // (input )
     .rst_n                          (rst_n                      ), // (input )
 // ---------------------------------------------------------------------------------
 // Write Control & Status
 // ---------------------------------------------------------------------------------
     .wr_en                          (reqfifo_wren               ), // (input )
     .wr_data                        (addr_match                 ), // (input )
-    .prog_data                      ('d1                        ), // (input )
+    .prog_data                      (1'b1                       ), // (input )
     .wr_cnt                         (                           ), // (output)
-    .full                           (                           ), // (output)
+    .full                           (reqfifo_full               ), // (output)
     .pfull                          (                           ), // (output)
 // ---------------------------------------------------------------------------------
 // Read Control & Status
@@ -251,8 +245,8 @@ if(MODE_READ == 0) begin:wdata_if
 
 for(i=0;i<NUM_MASTER;i=i+1)begin:mstwr_loop
 
-assign m_wdata_valid[i] = ~dififo_empty && dififo_rddata[i] ? wdata_valid : 'd0;
-assign m_wdata_ready_mask[i] = ~dififo_empty && dififo_rddata[i] ? m_wdata_ready[i] : 'd0;
+assign m_wdata_valid[i] = ~dififo_empty && dififo_rddata[i] ? wdata_valid : 1'b0;
+assign m_wdata_ready_mask[i] = ~dififo_empty && dififo_rddata[i] ? m_wdata_ready[i] : 1'b0;
 assign m_wdata_info[i*WIDTH_DATAINFO+:WIDTH_DATAINFO] = wdata_info;
 end
 
@@ -274,16 +268,16 @@ u1_infofifo
 // CLock & Reset
 // ---------------------------------------------------------------------------------
     .clk_wr                         (clk_sys                    ), // (input )
-    .clk_rd                         ('d0                        ), // (input )
+    .clk_rd                         (clk_sys                    ), // (input )
     .rst_n                          (rst_n                      ), // (input )
 // ---------------------------------------------------------------------------------
 // Write Control & Status
 // ---------------------------------------------------------------------------------
     .wr_en                          (reqfifo_wren               ), // (input )
     .wr_data                        (addr_match                 ), // (input )
-    .prog_data                      ('d1                        ), // (input )
+    .prog_data                      (OUTSTANDING_PROG_ONE       ), // (input )
     .wr_cnt                         (                           ), // (output)
-    .full                           (                           ), // (output)
+    .full                           (dififo_full                ), // (output)
     .pfull                          (                           ), // (output)
 // ---------------------------------------------------------------------------------
 // Read Control & Status
@@ -294,6 +288,13 @@ u1_infofifo
     .empty                          (dififo_empty               ), // (output)
     .aempty                         (                           )  // (output)
 );
+
+end else begin:rdata_if
+
+assign dififo_full = 1'b0;
+assign wdata_ready = 1'b0;
+assign m_wdata_info = {NUM_MASTER*WIDTH_DATAINFO{1'b0}};
+assign m_wdata_valid = {NUM_MASTER{1'b0}};
 
 end
 endgenerate

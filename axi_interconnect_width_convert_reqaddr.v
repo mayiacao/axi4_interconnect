@@ -21,13 +21,13 @@
 
 module axi_interconnect_width_convert_reqaddr #
 (
-    parameter                           WIDTH_ID            = 4     ,
-    parameter                           WIDTH_ADDR          = 32    ,
-    parameter                           WIDTH_MDATA         = 32    ,
-    parameter                           WIDTH_AUSER         = 1     ,
+    parameter                           WIDTH_ID = 4                ,
+    parameter                           WIDTH_ADDR = 32             ,
+    parameter                           WIDTH_MDATA = 32            ,
+    parameter                           WIDTH_AUSER = 1             ,
 
-    parameter                           W_ID                = (WIDTH_ID > 0) ? WIDTH_ID : 'd1,
-    parameter                           W_AUSER             = (WIDTH_AUSER > 0) ? WIDTH_AUSER : 'd1,
+    parameter                           W_ID = (WIDTH_ID > 0) ? WIDTH_ID : 'd1,
+    parameter                           W_AUSER = (WIDTH_AUSER > 0) ? WIDTH_AUSER : 'd1,
     parameter                           U_DLY = 1                     // 
 )
 (
@@ -83,6 +83,11 @@ localparam IDLE      = 1'b0;
 localparam WAIT      = 1'b1;
 localparam MAX_MSIZE = CLOG2(WIDTH_MDATA/8);
 
+wire                               [2:0] reqasize_limited             ;
+wire                    [WIDTH_ADDR-1:0] wrap_mask_next              ; 
+wire                    [WIDTH_ADDR-1:0] m_reqaaddr_step             ; 
+wire                    [WIDTH_ADDR-1:0] wrap_reqaaddr_next          ; 
+
 reg                                     cstate                      ; 
 reg                                     nstate                      ; 
 
@@ -90,7 +95,13 @@ reg                              [15:0] max_burst_len               ;
 reg                              [15:0] remain_len                  ; 
 reg                              [15:0] remain_len_last             ; 
 reg                    [WIDTH_ADDR-1:0] boundary_mask               ; 
+reg                    [WIDTH_ADDR-1:0] boundary_base               ; 
  
+assign reqasize_limited = (s_reqasize <= MAX_MSIZE) ? s_reqasize : MAX_MSIZE;
+assign wrap_mask_next = (s_reqalen + 'd1) * (1 << s_reqasize) - 'd1;
+assign m_reqaaddr_step = (m_reqalen + 'd1) * (1 << m_reqasize);
+assign wrap_reqaaddr_next = boundary_base | ((m_reqaaddr + m_reqaaddr_step) & boundary_mask);
+
 always @ (posedge clk_sys or negedge rst_n) begin
     if(~rst_n)
         cstate <= #U_DLY IDLE;
@@ -131,23 +142,26 @@ always @ (posedge clk_sys or negedge rst_n) begin
         remain_len_last <= #U_DLY 'd0;
     end
     else begin
-        if(s_reqaburst == 2'd01)
+        if(s_reqaburst == 2'b01)
             max_burst_len <= #U_DLY 'd256;
         else
             max_burst_len <= #U_DLY 'd16;
 
         if(s_reqavalid && (cstate == IDLE))
-            remain_len_last <= #U_DLY (s_reqalen + 'd1) * (1<<(s_reqasize - m_reqasize));
+            remain_len_last <= #U_DLY (s_reqalen + 'd1) * (1<<(s_reqasize - reqasize_limited));
         else
             remain_len_last <= #U_DLY remain_len;
     end
 end
 
 always @ (posedge clk_sys or negedge rst_n) begin
-    if(~rst_n)
+    if(~rst_n) begin
         boundary_mask <= #U_DLY 'd0;
+        boundary_base <= #U_DLY 'd0;
+    end
     else begin
-        boundary_mask <= #U_DLY s_reqaaddr + (s_reqalen + 'd1)*(1<<s_reqasize) - 'd1;
+        boundary_mask <= #U_DLY wrap_mask_next;
+        boundary_base <= #U_DLY (s_reqaaddr & ~wrap_mask_next);
     end
 end
 
@@ -176,30 +190,31 @@ always @ (posedge clk_sys or negedge rst_n) begin
         m_reqaqos <= #U_DLY s_reqaqos;
         m_reqauser <= #U_DLY s_reqauser;
         
-        if(s_reqasize <= MAX_MSIZE)
-            m_reqasize <= #U_DLY s_reqasize;
-        else
-            m_reqasize <= #U_DLY MAX_MSIZE;
+        m_reqasize <= #U_DLY reqasize_limited;
 
-        if(s_reqaburst == 2'd01) begin
-            if(remain_len > 'd256)
-                m_reqalen <= #U_DLY 'd255;
-            else
-                m_reqalen <= #U_DLY remain_len[7:0] - 'd1;
+        if((cstate == WAIT) && ~m_reqavalid) begin
+            if(s_reqaburst == 2'b01) begin
+                if(remain_len_last > 'd256)
+                    m_reqalen <= #U_DLY 'd255;
+                else
+                    m_reqalen <= #U_DLY remain_len_last[7:0] - 'd1;
+            end
+            else begin
+                if(remain_len_last > 'd16)
+                    m_reqalen <= #U_DLY 'd15;
+                else
+                    m_reqalen <= #U_DLY remain_len_last[7:0] - 'd1;
+            end
         end
-        else begin
-            if(remain_len > 'd16)
-                m_reqalen <= #U_DLY 'd15;
-            else
-                m_reqalen <= #U_DLY {4'd0,remain_len[3:0]} - 'd1;
-        end
+        else
+            ;
 
         if(s_reqavalid && (cstate == IDLE))
             m_reqaaddr <= #U_DLY s_reqaaddr;
         else if(m_reqaready && m_reqavalid)
             case(s_reqaburst)
-                2'b01   : m_reqaaddr <= #U_DLY m_reqaaddr + (m_reqalen + 'd1) * (1<<m_reqasize);
-                2'b10   : m_reqaaddr <= #U_DLY boundary_mask & (m_reqaaddr + (m_reqalen + 'd1) * (1<<m_reqasize));
+                2'b01   : m_reqaaddr <= #U_DLY m_reqaaddr + m_reqaaddr_step;
+                2'b10   : m_reqaaddr <= #U_DLY wrap_reqaaddr_next;
                 default :;
             endcase
         else
@@ -230,10 +245,7 @@ always @ (posedge clk_sys or negedge rst_n) begin
         else
             split_size <= #U_DLY s_reqasize - MAX_MSIZE;
 
-        if(s_reqasize <= MAX_MSIZE)
-            split_reqsize <= #U_DLY s_reqasize;
-        else
-            split_size <= #U_DLY MAX_MSIZE;
+        split_reqsize <= #U_DLY reqasize_limited;
 
         if((remain_len <= max_burst_len) && (cstate == WAIT))
             split_tlast <= #U_DLY 'd1;

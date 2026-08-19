@@ -21,8 +21,8 @@
 
 module axi_interconnect_crossbar_arbit_polling #
 (
-    parameter                           NUM         = 1             , //
-    parameter                           WIDTH       = LOG2(NUM-1)
+    parameter                           NUM = 1                     , //
+    parameter                           WIDTH = LOG2(NUM-1)         
 )
 (
 // ---------------------------------------------------------------------------------

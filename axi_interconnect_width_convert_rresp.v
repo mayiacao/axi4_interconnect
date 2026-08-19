@@ -21,13 +21,13 @@
 
 module axi_interconnect_width_convert_rresp #
 (
-    parameter                           WIDTH_ID            = 4     ,
-    parameter                           WIDTH_SDATA         = 32    ,
-    parameter                           WIDTH_MDATA         = 32    ,
-    parameter                           WIDTH_RUSER         = 1     ,
-    parameter                           WIDTH_OUTSTANDING   = 4     ,
-    parameter                           W_ID                = (WIDTH_ID > 0) ? WIDTH_ID : 'd1,
-    parameter                           W_RUSER             = (WIDTH_RUSER > 0) ? WIDTH_RUSER : 'd1,
+    parameter                           WIDTH_ID = 4                ,
+    parameter                           WIDTH_SDATA = 32            ,
+    parameter                           WIDTH_MDATA = 32            ,
+    parameter                           WIDTH_RUSER = 1             ,
+    parameter                           WIDTH_OUTSTANDING = 4       ,
+    parameter                           W_ID = (WIDTH_ID > 0) ? WIDTH_ID : 'd1,
+    parameter                           W_RUSER = (WIDTH_RUSER > 0) ? WIDTH_RUSER : 'd1,
     parameter                           U_DLY = 1                     // 
 )
 (
@@ -87,6 +87,7 @@ localparam WAIT = 2'b10;
 (*mark_debug = "true" ,keep = "true"*)reg                     [WIDTH_SUB-1:0] mux_cnt                     ; 
                              
 (*mark_debug = "true" ,keep = "true"*)wire                                    reqfifo_rden                ; 
+(*mark_debug = "true" ,keep = "true"*)wire                             [11:0] reqfifo_wrdata              ; 
 (*mark_debug = "true" ,keep = "true"*)wire                             [11:0] reqfifo_rddata              ; 
 (*mark_debug = "true" ,keep = "true"*)wire                                    reqfifo_empty               ; 
                             
@@ -97,6 +98,10 @@ localparam WAIT = 2'b10;
 (*mark_debug = "true" ,keep = "true"*)wire                                    dfifo_empty                 ; 
 
 genvar                                  i                           ;
+
+localparam      [WIDTH_OUTSTANDING-1:0] OUTSTANDING_PROG_ONE        = {{(WIDTH_OUTSTANDING-1){1'b0}},1'b1};
+
+assign reqfifo_wrdata = {req_last,req_size,req_offset};
 
 always @ (posedge clk_sys or negedge rst_n) begin
     if(~rst_n)
@@ -121,7 +126,7 @@ always @ (posedge clk_sys or negedge rst_n) begin
     end
     else begin
         if(cstate == IDLE)
-            stp_data <= #U_DLY (1'd1 << stp_size) - 'd1;
+            stp_data <= #U_DLY (1 << stp_size) - 1;
         else
             ;
         
@@ -266,14 +271,14 @@ u0_axi_interconnect_fifogen
 // CLock & Reset
 // ---------------------------------------------------------------------------------
     .clk_wr                         (clk_sys                    ), // (input )
-    .clk_rd                         ('d0                        ), // (input )
+    .clk_rd                         (clk_sys                    ), // (input )
     .rst_n                          (rst_n                      ), // (input )
 // ---------------------------------------------------------------------------------
 // Write Control & Status
 // ---------------------------------------------------------------------------------
     .wr_en                          (req_en                     ), // (input )
-    .wr_data                        ({req_last,req_size,req_offset}), // (input )
-    .prog_data                      ('d1                        ), // (input )
+    .wr_data                        (reqfifo_wrdata             ), // (input )
+    .prog_data                      (OUTSTANDING_PROG_ONE       ), // (input )
     .wr_cnt                         (                           ), // (output)
     .full                           (                           ), // (output)
     .pfull                          (                           ), // (output)
@@ -303,14 +308,14 @@ u1_axi_interconnect_fifogen
 // CLock & Reset
 // ---------------------------------------------------------------------------------
     .clk_wr                         (clk_sys                    ), // (input )
-    .clk_rd                         ('d0                        ), // (input )
+    .clk_rd                         (clk_sys                    ), // (input )
     .rst_n                          (rst_n                      ), // (input )
 // ---------------------------------------------------------------------------------
 // Write Control & Status
 // ---------------------------------------------------------------------------------
     .wr_en                          (dfifo_wren                 ), // (input )
     .wr_data                        (dfifo_wrdata               ), // (input )
-    .prog_data                      ('d2                        ), // (input )
+    .prog_data                      (2'd2                       ), // (input )
     .wr_cnt                         (                           ), // (output)
     .full                           (                           ), // (output)
     .pfull                          (dfifo_pfull                ), // (output)

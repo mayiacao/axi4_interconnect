@@ -21,19 +21,19 @@
 
 module axi_interconnect_crossbar_switch #
 (
-    parameter                           MODE_READ           = 1     ,
-    parameter                           NUM_SLAVE           = 1     , // 0 ~ 4
-    parameter                           NUM_MASTER          = 1     , // 0 ~ 4
-    parameter                           WIDTH_ADDR          = 32    ,
+    parameter                           MODE_READ = 1               ,
+    parameter                           NUM_SLAVE = 1               , // 0 ~ 4
+    parameter                           NUM_MASTER = 1              , // 0 ~ 4
+    parameter                           WIDTH_ADDR = 32             ,
     parameter [NUM_MASTER*WIDTH_ADDR-1:0] ADDR_BASE         = 'd0   , 
     parameter [NUM_MASTER*WIDTH_ADDR-1:0] ADDR_HIGH         = 'd0   , 
-    parameter                           WIDTH_ID            = 4     ,
-    parameter                           WIDTH_RUSER         = 1     ,
-    parameter                           WIDTH_ADDRINFO      = 64    ,   
-    parameter                           WIDTH_DATAINFO      = 48    ,
-    parameter                           WIDTH_RESPINFO      = 48    ,
-    parameter                           NUM_OUTSTANDING     = 4     ,
-    parameter                           WIDTH_SALVE         = LOG2(NUM_SLAVE-1),
+    parameter                           WIDTH_ID = 4                ,
+    parameter                           WIDTH_RUSER = 1             ,
+    parameter                           WIDTH_ADDRINFO = 64         ,
+    parameter                           WIDTH_DATAINFO = 48         ,
+    parameter                           WIDTH_RESPINFO = 48         ,
+    parameter                           NUM_OUTSTANDING = 4         ,
+    parameter                           WIDTH_SALVE = LOG2(NUM_SLAVE-1),
     parameter                           U_DLY = 1                     // 
 )
 (
@@ -45,29 +45,29 @@ module axi_interconnect_crossbar_switch #
 // ---------------------------------------------------------------------------------
 // Slave Port
 // ---------------------------------------------------------------------------------
-    input     [NUM_SLAVE*WIDTH_ADDRINFO-1:0] s_addr_info            , 
+    input [NUM_SLAVE*WIDTH_ADDRINFO-1:0] s_addr_info                ,
     input               [NUM_SLAVE-1:0] s_addr_valid                , 
     output              [NUM_SLAVE-1:0] s_addr_ready                , 
 
-    input     [NUM_SLAVE*WIDTH_DATAINFO-1:0] s_wdata_info           , 
+    input [NUM_SLAVE*WIDTH_DATAINFO-1:0] s_wdata_info               ,
     input               [NUM_SLAVE-1:0] s_wdata_valid               , 
     output              [NUM_SLAVE-1:0] s_wdata_ready               , 
 
-    output     [NUM_SLAVE*WIDTH_RESPINFO-1:0] s_resp_info           , 
+    output [NUM_SLAVE*WIDTH_RESPINFO-1:0] s_resp_info               ,
     input               [NUM_SLAVE-1:0] s_resp_ready                , 
     output              [NUM_SLAVE-1:0] s_resp_valid                , 
 // ---------------------------------------------------------------------------------
 // Master
 // ---------------------------------------------------------------------------------
-    output     [NUM_MASTER*WIDTH_ADDRINFO-1:0] m_addr_info          , 
+    output [NUM_MASTER*WIDTH_ADDRINFO-1:0] m_addr_info              ,
     output             [NUM_MASTER-1:0] m_addr_valid                , 
     input              [NUM_MASTER-1:0] m_addr_ready                , 
 
-    output     [NUM_MASTER*WIDTH_DATAINFO-1:0] m_wdata_info         , 
+    output [NUM_MASTER*WIDTH_DATAINFO-1:0] m_wdata_info             ,
     output             [NUM_MASTER-1:0] m_wdata_valid               , 
     input              [NUM_MASTER-1:0] m_wdata_ready               , 
 
-    input     [NUM_MASTER*WIDTH_RESPINFO-1:0] m_resp_info           , 
+    input [NUM_MASTER*WIDTH_RESPINFO-1:0] m_resp_info               ,
     output             [NUM_MASTER-1:0] m_resp_ready                , 
     input              [NUM_MASTER-1:0] m_resp_valid                  
 );

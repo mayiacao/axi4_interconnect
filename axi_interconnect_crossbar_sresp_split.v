@@ -21,9 +21,9 @@
 
 module axi_interconnect_crossbar_sresp_split #
 (
-    parameter                           NUM_SLAVE           = 1     , // 0 ~ 4
-    parameter                           WIDTH_RESPINFO      = 48    ,
-    parameter                           WIDTH_SALVE         = LOG2(NUM_SLAVE-1),
+    parameter                           NUM_SLAVE = 1               , // 0 ~ 4
+    parameter                           WIDTH_RESPINFO = 48         ,
+    parameter                           WIDTH_SALVE = LOG2(NUM_SLAVE-1),
     parameter                           U_DLY = 1                     // 
 )
 (
@@ -35,7 +35,7 @@ module axi_interconnect_crossbar_sresp_split #
 // ---------------------------------------------------------------------------------
 // Slave
 // ---------------------------------------------------------------------------------
-    input      [WIDTH_RESPINFO+WIDTH_SALVE-1:0] resp_info           , 
+    input [WIDTH_RESPINFO+WIDTH_SALVE-1:0] resp_info                ,
     input                               resp_valid                  , 
     output                              resp_ready                  , 
 // ---------------------------------------------------------------------------------
@@ -98,14 +98,14 @@ u_axi_interconnect_fifogen
 // CLock & Reset
 // ---------------------------------------------------------------------------------
     .clk_wr                         (clk_sys                    ), // (input )
-    .clk_rd                         ('d0                        ), // (input )
+    .clk_rd                         (clk_sys                    ), // (input )
     .rst_n                          (rst_n                      ), // (input )
 // ---------------------------------------------------------------------------------
 // Write Control & Status
 // ---------------------------------------------------------------------------------
     .wr_en                          (resp_valid & resp_ready    ), // (input )
     .wr_data                        (resp_info                  ), // (input )
-    .prog_data                      ('d1                        ), // (input )
+    .prog_data                      (1'b1                       ), // (input )
     .wr_cnt                         (                           ), // (output)
     .full                           (fifo_full                  ), // (output)
     .pfull                          (                           ), // (output)

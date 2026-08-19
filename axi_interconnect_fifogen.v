@@ -109,14 +109,14 @@ always @ (*) begin
 end
 
 always @ (posedge clk_pb or negedge rst_n) begin
-    if(rst_n == 1'b0) 
+    if(~rst_n) 
         rdptr <= #U_DLY {(PB_AW+1){1'b0}};
     else 
         rdptr <= #U_DLY rdptr_next;
 end
 
 always @ (posedge clk_wr or negedge rst_n) begin
-    if(rst_n == 1'b0) begin
+    if(~rst_n) begin
         full <= #U_DLY 1'b0;
         pfull <= #U_DLY 1'b0;
         wr_cnt <= #U_DLY {PA_AW{1'b0}};
@@ -138,7 +138,7 @@ end
 
 always @ (posedge clk_pb or negedge rst_n)
 begin
-    if(rst_n == 1'b0) begin
+    if(~rst_n) begin
         empty <= #U_DLY 1'b1;
         aempty <= #U_DLY 1'b1;
         rd_cnt <= #U_DLY {PB_AW{1'b0}};
@@ -189,7 +189,7 @@ if(RD_AS_ACK == "FALSE") begin:rdreq_if
 assign rdaddr[0*MEM_AW+:MEM_AW] = rdptr[MEM_AW-1:0];
 
 always @(posedge clk_pb or negedge rst_n) begin
-    if(rst_n == 1'b0)
+    if(~rst_n)
         rd_data <= #U_DLY {PB_DW{1'b0}};
     else begin
         if(~empty && rd_en)
@@ -204,7 +204,7 @@ end else begin:rdack_if
 assign rdaddr[0*MEM_AW+:MEM_AW] = rdptr_next[MEM_AW-1:0];
 
 always @(posedge clk_pb or negedge rst_n) begin
-    if(rst_n == 1'b0)
+    if(~rst_n)
         rd_data <= #U_DLY {PB_DW{1'b0}};
     else begin
         rd_data <= #U_DLY mem[rdaddr[0*MEM_AW+:MEM_AW]];
@@ -340,7 +340,7 @@ if(RD_AS_ACK == "FALSE") begin:rdreq1_if
 assign rdaddr[i*MEM_AW+:MEM_AW] = {rdptr,{SUB_ABAW{1'b0}}} + i;
 
 always @(posedge clk_pb or negedge rst_n) begin
-    if(rst_n == 1'b0)
+    if(~rst_n)
         rd_data[i*MEM_DW+:MEM_DW] <= #U_DLY {MEM_DW{1'b0}};
     else begin
         if(~empty && rd_en)
@@ -355,7 +355,7 @@ end else begin:rdack1_if
 assign rdaddr[i*MEM_AW+:MEM_AW] = {rdptr_next,{SUB_ABAW{1'b0}}} + i;
 
 always @(posedge clk_pb or negedge rst_n) begin
-    if(rst_n == 1'b0)
+    if(~rst_n)
         rd_data[i*MEM_DW+:MEM_DW] <= #U_DLY {MEM_DW{1'b0}};
     else begin
         rd_data[i*MEM_DW+:MEM_DW] <= #U_DLY mem[rdaddr[i*MEM_AW+:MEM_AW]];

@@ -21,11 +21,11 @@
 
 module axi_interconnect_width_convert_bresp #
 (
-    parameter                           WIDTH_ID            = 4     ,
-    parameter                           WIDTH_RUSER         = 1     ,
-    parameter                           WIDTH_OUTSTANDING   = 4     ,
-    parameter                           W_ID                = (WIDTH_ID > 0) ? WIDTH_ID : 'd1,
-    parameter                           W_RUSER             = (WIDTH_RUSER > 0) ? WIDTH_RUSER : 'd1,
+    parameter                           WIDTH_ID = 4                ,
+    parameter                           WIDTH_RUSER = 1             ,
+    parameter                           WIDTH_OUTSTANDING = 4       ,
+    parameter                           W_ID = (WIDTH_ID > 0) ? WIDTH_ID : 'd1,
+    parameter                           W_RUSER = (WIDTH_RUSER > 0) ? WIDTH_RUSER : 'd1,
     parameter                           U_DLY = 1                     // 
 )
 (
@@ -66,6 +66,8 @@ reg                               [1:0] nstate                      ;
 
 wire                                    reqfifo_rddata              ; 
 wire                                    reqfifo_empty               ; 
+
+localparam      [WIDTH_OUTSTANDING-1:0] OUTSTANDING_PROG_ONE        = {{(WIDTH_OUTSTANDING-1){1'b0}},1'b1};
 
 always @ (posedge clk_sys or negedge rst_n) begin
     if(~rst_n)
@@ -140,14 +142,14 @@ u0_axi_interconnect_fifogen
 // CLock & Reset
 // ---------------------------------------------------------------------------------
     .clk_wr                         (clk_sys                    ), // (input )
-    .clk_rd                         ('d0                        ), // (input )
+    .clk_rd                         (clk_sys                    ), // (input )
     .rst_n                          (rst_n                      ), // (input )
 // ---------------------------------------------------------------------------------
 // Write Control & Status
 // ---------------------------------------------------------------------------------
     .wr_en                          (req_en                     ), // (input )
     .wr_data                        (req_last                   ), // (input )
-    .prog_data                      ('d1                        ), // (input )
+    .prog_data                      (OUTSTANDING_PROG_ONE       ), // (input )
     .wr_cnt                         (                           ), // (output)
     .full                           (                           ), // (output)
     .pfull                          (                           ), // (output)

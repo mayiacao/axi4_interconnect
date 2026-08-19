@@ -21,23 +21,23 @@
 
 module axi_interconnect_width_convert #
 (
-    parameter                           WIDTH_ID            = 4     ,
-    parameter                           WIDTH_ADDR          = 32    ,
-    parameter                           WIDTH_SDATA         = 64    ,
-    parameter                           WIDTH_MDATA         = 32    ,
-    parameter                           WIDTH_AWUSER        = 1     ,
-    parameter                           WIDTH_ARUSER        = 1     ,
-    parameter                           WIDTH_WUSER         = 1     ,
-    parameter                           WIDTH_RUSER         = 1     ,
-    parameter                           WIDTH_BUSER         = 1     ,
-    parameter                           NUM_OUTSTANDING     = 4     ,
+    parameter                           WIDTH_ID = 4                ,
+    parameter                           WIDTH_ADDR = 32             ,
+    parameter                           WIDTH_SDATA = 64            ,
+    parameter                           WIDTH_MDATA = 32            ,
+    parameter                           WIDTH_AWUSER = 1            ,
+    parameter                           WIDTH_ARUSER = 1            ,
+    parameter                           WIDTH_WUSER = 1             ,
+    parameter                           WIDTH_RUSER = 1             ,
+    parameter                           WIDTH_BUSER = 1             ,
+    parameter                           NUM_OUTSTANDING = 4         ,
 
-    parameter                           W_ID                = (WIDTH_ID > 0) ? WIDTH_ID : 'd1,
-    parameter                           W_AWUSER            = (WIDTH_AWUSER > 0) ? WIDTH_AWUSER : 'd1,
-    parameter                           W_ARUSER            = (WIDTH_ARUSER > 0) ? WIDTH_ARUSER : 'd1,
-    parameter                           W_WUSER             = (WIDTH_WUSER > 0) ? WIDTH_WUSER : 'd1,
-    parameter                           W_RUSER             = (WIDTH_RUSER > 0) ? WIDTH_RUSER : 'd1,
-    parameter                           W_BUSER             = (WIDTH_BUSER > 0) ? WIDTH_BUSER : 'd1,
+    parameter                           W_ID = (WIDTH_ID > 0) ? WIDTH_ID : 'd1,
+    parameter                           W_AWUSER = (WIDTH_AWUSER > 0) ? WIDTH_AWUSER : 'd1,
+    parameter                           W_ARUSER = (WIDTH_ARUSER > 0) ? WIDTH_ARUSER : 'd1,
+    parameter                           W_WUSER = (WIDTH_WUSER > 0) ? WIDTH_WUSER : 'd1,
+    parameter                           W_RUSER = (WIDTH_RUSER > 0) ? WIDTH_RUSER : 'd1,
+    parameter                           W_BUSER = (WIDTH_BUSER > 0) ? WIDTH_BUSER : 'd1,
     parameter                           U_DLY = 1                     // 
 )
 (

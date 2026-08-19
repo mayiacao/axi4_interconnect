@@ -21,16 +21,16 @@
 
 module axi_interconnect_crossbar_mresp_arbit #
 (
-    parameter                           NUM_SLAVE           = 1     , // 0 ~ 4
-    parameter                           NUM_MASTER          = 1     , // 0 ~ 4
-    parameter                           WIDTH_ID            = 4     ,
-    parameter                           WIDTH_RESPINFO      = 48    ,
-    parameter                           NUM_OUTSTANDING     = 4     ,
-    parameter                           MODE_READ           = 0     ,
-    parameter                           WIDTH_RUSER         = 1     ,
-    parameter                           WIDTH_OUTSTANDING   = LOG2(NUM_OUTSTANDING-1),
-    parameter                           WIDTH_SALVE         = LOG2(NUM_SLAVE-1),
-    parameter                           WIDTH_MASTER        = LOG2(NUM_MASTER),
+    parameter                           NUM_SLAVE = 1               , // 0 ~ 4
+    parameter                           NUM_MASTER = 1              , // 0 ~ 4
+    parameter                           WIDTH_ID = 4                ,
+    parameter                           WIDTH_RESPINFO = 48         ,
+    parameter                           NUM_OUTSTANDING = 4         ,
+    parameter                           MODE_READ = 0               ,
+    parameter                           WIDTH_RUSER = 1             ,
+    parameter                           WIDTH_OUTSTANDING = LOG2(NUM_OUTSTANDING-1),
+    parameter                           WIDTH_SALVE = LOG2(NUM_SLAVE-1),
+    parameter                           WIDTH_MASTER = LOG2(NUM_MASTER),
     parameter                           U_DLY = 1                     // 
 )
 (
@@ -43,11 +43,11 @@ module axi_interconnect_crossbar_mresp_arbit #
 // Response Queen
 // ---------------------------------------------------------------------------------
     input                               req_wren                    , 
-    input     [NUM_MASTER+WIDTH_SALVE+WIDTH_ID:0] req_id            , 
+    input [NUM_MASTER+WIDTH_SALVE+WIDTH_ID:0] req_id                ,
 // ---------------------------------------------------------------------------------
 // Slave 
 // ---------------------------------------------------------------------------------
-    input     [NUM_MASTER*WIDTH_RESPINFO-1:0] m_resp_info           , 
+    input [NUM_MASTER*WIDTH_RESPINFO-1:0] m_resp_info               ,
     output             [NUM_MASTER-1:0] m_resp_ready                , 
     input              [NUM_MASTER-1:0] m_resp_valid                , 
 // ---------------------------------------------------------------------------------
@@ -58,9 +58,12 @@ module axi_interconnect_crossbar_mresp_arbit #
     input                               resp_ready                    
 );
 
+localparam                           WIDTH_RESPFIFO_INFO = NUM_MASTER+WIDTH_SALVE+WIDTH_ID+1;
+localparam                           WIDTH_RESPFIFO_AW = WIDTH_MASTER+WIDTH_OUTSTANDING;
+
 wire                     [NUM_MASTER:0] ififo_rden_tmp              ; 
 wire                                    ififo_rden                  ; 
-wire [NUM_MASTER+WIDTH_SALVE+WIDTH_ID:0] ififo_rddata               ; 
+wire             [WIDTH_RESPFIFO_INFO-1:0] ififo_rddata             ; 
 wire                                    ififo_empty                 ; 
 
 wire [(NUM_MASTER+1)*WIDTH_RESPINFO-1:0] m_resp_info_tmp            ; 
@@ -74,6 +77,8 @@ wire                 [WIDTH_MASTER-1:0] cuser                       ;
 
 genvar                                  i                           ;
 genvar                                  j                           ;
+
+localparam       [WIDTH_RESPFIFO_AW-1:0] RESP_FIFO_PROG_ONE         = {{(WIDTH_RESPFIFO_AW-1){1'b0}},1'b1};
 
 always @ (*) begin
 if(resp_ready)
@@ -160,7 +165,7 @@ always @ (posedge clk_sys or negedge rst_n) begin
         else
             ;
         
-        if(m_resp_valid[cuser] & m_resp_ready[cuser])
+        if(m_resp_valid_tmp[cuser] & m_resp_ready_tmp[cuser])
             resp_valid <= #U_DLY 'd1;
         else if(resp_ready)
             resp_valid <= #U_DLY 'd0;
@@ -195,9 +200,9 @@ end
 
 axi_interconnect_fifogen #
 (
-    .PA_DW                          (NUM_MASTER+WIDTH_SALVE+WIDTH_ID+1), // It must be a multiple of 8.
-    .PA_AW                          (WIDTH_MASTER+WIDTH_OUTSTANDING), 
-    .PB_DW                          (NUM_MASTER+WIDTH_SALVE+WIDTH_ID+1), // It must be a multiple of PA_DW.
+    .PA_DW                          (WIDTH_RESPFIFO_INFO        ), // It must be a multiple of 8.
+    .PA_AW                          (WIDTH_RESPFIFO_AW          ), 
+    .PB_DW                          (WIDTH_RESPFIFO_INFO        ), // It must be a multiple of PA_DW.
     .RD_AS_ACK                      ("TRUE"                     ), // "TRUE" OR "FALSE"
     .CLOCK_ASYNC                    ("FALSE"                    ), // 
     .U_DLY                          (U_DLY                      )  // 
@@ -208,14 +213,14 @@ u_axi_interconnect_fifogen
 // CLock & Reset
 // ---------------------------------------------------------------------------------
     .clk_wr                         (clk_sys                    ), // (input )
-    .clk_rd                         ('d0                        ), // (input )
+    .clk_rd                         (clk_sys                    ), // (input )
     .rst_n                          (rst_n                      ), // (input )
 // ---------------------------------------------------------------------------------
 // Write Control & Status
 // ---------------------------------------------------------------------------------
     .wr_en                          (req_wren                   ), // (input )
     .wr_data                        (req_id                     ), // (input )
-    .prog_data                      ('d1                        ), // (input )
+    .prog_data                      (RESP_FIFO_PROG_ONE         ), // (input )
     .wr_cnt                         (                           ), // (output)
     .full                           (                           ), // (output)
     .pfull                          (                           ), // (output)
